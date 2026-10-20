@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Project, ProjectUpdate, Task, TaskStatus } from "@/lib/nova/types";
-import { dateKey, formatShortDate } from "@/lib/nova/date";
-import { useNova } from "./nova-provider";
+import type { Project, ProjectUpdate, Task, TaskStatus } from "@/lib/aurea/types";
+import { dateKey, formatShortDate } from "@/lib/aurea/date";
+import { useAurea } from "./aurea-provider";
 import { ProjectModal } from "./project-modal";
 import { TaskModal } from "./task-modal";
 
@@ -18,7 +18,7 @@ function formatUpdateTime(value: string) {
 }
 
 export function ProjectsBoard() {
-  const { state, hydrated, setTaskStatus, reorderTask, toggleTaskSubtask, updateProject } = useNova();
+  const { state, hydrated, setTaskStatus, reorderTask, toggleTaskSubtask, updateProject } = useAurea();
   const activeProjects = state.projects.filter((project) => project.status === "active");
   const archivedProjects = state.projects.filter((project) => project.status === "archived");
   const [selectedProjectId, setSelectedProjectId] = useState(() => activeProjects[0]?.id ?? "");
@@ -45,7 +45,7 @@ export function ProjectsBoard() {
     if (selectedProjectId && !activeProjects.some((project) => project.id === selectedProjectId) && activeProjects[0]) setSelectedProjectId(activeProjects[0].id);
   }, [activeProjects, selectedProjectId]);
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">NOVA</span><p>Opening your projects…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">AUREA</span><p>Opening your projects…</p></div>;
 
   function dropStatus(status: TaskStatus) {
     if (!draggedTaskId) return;
@@ -96,7 +96,7 @@ export function ProjectsBoard() {
   return (
     <>
       <header className="page-header">
-        <div><p className="mobile-brand">NOVA</p><span className="eyebrow">PROJECTS</span><h1>Projects</h1><p className="subtitle">Big things feel lighter when every next step has a home.</p></div>
+        <div><p className="mobile-brand">AUREA</p><span className="eyebrow">PROJECTS</span><h1>Projects</h1><p className="subtitle">Big things feel lighter when every next step has a home.</p></div>
         <div className="header-actions"><button className="primary-button" onClick={() => setProjectModal({ open: true })}>＋ New project</button></div>
       </header>
 

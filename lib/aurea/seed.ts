@@ -1,8 +1,8 @@
-import type { NovaState } from "./types";
+import type { AureaState } from "./types";
 
 const nowIso = () => new Date().toISOString();
 
-export function createSeedState(): NovaState {
+export function createSeedState(): AureaState {
   const now = nowIso();
 
   return {

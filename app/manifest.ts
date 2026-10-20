@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NOVA Planner",
-    short_name: "NOVA",
+    name: "Aurea Planner",
+    short_name: "Aurea",
     description: "A calm personal planner for tasks, projects, habits and time.",
     start_url: "/today",
     display: "standalone",

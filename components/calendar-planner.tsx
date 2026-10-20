@@ -1,10 +1,10 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { dateKey, formatLongDate, formatTime, getMonthGrid, googleMapsUrl, habitOccursOn, parseDateKey, resolvedTimeZone, sameMonth, taskIsCompletedOn, taskOccursOn, timeRangeLabel, zonedNow } from "@/lib/nova/date";
-import { parseIcs } from "@/lib/nova/ics";
-import type { Task } from "@/lib/nova/types";
-import { useNova } from "./nova-provider";
+import { dateKey, formatLongDate, formatTime, getMonthGrid, googleMapsUrl, habitOccursOn, parseDateKey, resolvedTimeZone, sameMonth, taskIsCompletedOn, taskOccursOn, timeRangeLabel, zonedNow } from "@/lib/aurea/date";
+import { parseIcs } from "@/lib/aurea/ics";
+import type { Task } from "@/lib/aurea/types";
+import { useAurea } from "./aurea-provider";
 import { TaskModal } from "./task-modal";
 
 function isoParts(value: string, timeZoneSetting: string) {
@@ -14,7 +14,7 @@ function isoParts(value: string, timeZoneSetting: string) {
 }
 
 export function CalendarPlanner() {
-  const { state, hydrated, importExternalEvents, googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar } = useNova();
+  const { state, hydrated, importExternalEvents, googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar } = useAurea();
   const [month, setMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(dateKey());
   const [taskModal, setTaskModal] = useState<{ open: boolean; task?: Task | null }>({ open: false });
@@ -53,14 +53,14 @@ export function CalendarPlanner() {
     setImportMessage(result.message);
   }
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">NOVA</span><p>Opening your calendar…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">AUREA</span><p>Opening your calendar…</p></div>;
 
   const weekdayLabels = state.settings.weekStartsMonday ? ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
   return (
     <>
       <header className="page-header">
-        <div><p className="mobile-brand">NOVA</p><span className="eyebrow">MONTHLY PLANNER</span><h1>Calendar</h1><p className="subtitle">NOVA tasks, routines and connected calendars in one month.</p></div>
+        <div><p className="mobile-brand">AUREA</p><span className="eyebrow">MONTHLY PLANNER</span><h1>Calendar</h1><p className="subtitle">Aurea tasks, routines and connected calendars in one month.</p></div>
         <div className="header-actions calendar-header-actions"><button className="soft-button" onClick={() => fileRef.current?.click()}> Import Apple/.ics</button><button className={googleCalendarConnected ? "soft-button" : "ghost-button"} onClick={googleAction}>G {googleCalendarConnected ? "Sync Google" : "Connect Google"}</button><button className="primary-button" onClick={() => setTaskModal({ open: true })}>＋ Add task</button><input ref={fileRef} hidden type="file" accept=".ics,text/calendar" onChange={importIcsFile} /></div>
       </header>
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { addDays, dateKey, durationInputParts, durationToMinutes, type DurationUnit } from "@/lib/nova/date";
-import { THEME_META } from "@/lib/nova/theme";
-import { useNova } from "./nova-provider";
-import type { Habit, HabitSubtask } from "@/lib/nova/types";
+import { addDays, dateKey, durationInputParts, durationToMinutes, type DurationUnit } from "@/lib/aurea/date";
+import { THEME_META } from "@/lib/aurea/theme";
+import { useAurea } from "./aurea-provider";
+import type { Habit, HabitSubtask } from "@/lib/aurea/types";
 
 const weekdays = [
   [0, "Sun"], [1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"], [5, "Fri"], [6, "Sat"],
@@ -21,7 +21,7 @@ export function HabitModal({
   habit?: Habit | null;
   occurrenceDate?: string;
 }) {
-  const { state, addHabit, updateHabit, deleteHabit } = useNova();
+  const { state, addHabit, updateHabit, deleteHabit } = useAurea();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [deletePrompt, setDeletePrompt] = useState(false);
   const [subtasks, setSubtasks] = useState<HabitSubtask[]>([]);

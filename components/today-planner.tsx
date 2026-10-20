@@ -17,9 +17,9 @@ import {
   timeRangeLabel,
   zonedNow,
   resolvedTimeZone,
-} from "@/lib/nova/date";
-import type { Habit, Task } from "@/lib/nova/types";
-import { useNova } from "./nova-provider";
+} from "@/lib/aurea/date";
+import type { Habit, Task } from "@/lib/aurea/types";
+import { useAurea } from "./aurea-provider";
 import { TaskModal } from "./task-modal";
 import { HabitModal } from "./habit-modal";
 
@@ -71,7 +71,7 @@ function recurringLabel(task: Task) {
 }
 
 export function TodayPlanner() {
-  const { state, hydrated, toggleTask, toggleTaskSubtask, updateTask, reorderTask, toggleHabit, toggleHabitSubtask } = useNova();
+  const { state, hydrated, toggleTask, toggleTaskSubtask, updateTask, reorderTask, toggleHabit, toggleHabitSubtask } = useAurea();
   const router = useRouter();
   const searchParams = useSearchParams();
   const current = zonedNow(state.settings.timeZone);
@@ -170,7 +170,7 @@ export function TodayPlanner() {
 
   useEffect(() => {
     if (!hydrated || !isToday || !unfinished.length) return;
-    const dismissed = window.localStorage.getItem(`nova-review-dismissed-${selectedDate}`);
+    const dismissed = window.localStorage.getItem(`aurea-review-dismissed-${selectedDate}`);
     if (dismissed) return;
     const check = () => {
       const now = zonedNow(state.settings.timeZone);
@@ -216,7 +216,7 @@ export function TodayPlanner() {
   }
 
   function finishReview() {
-    window.localStorage.setItem(`nova-review-dismissed-${selectedDate}`, "1");
+    window.localStorage.setItem(`aurea-review-dismissed-${selectedDate}`, "1");
     setReviewOpen(false);
     setReviewTaskIds([]);
     setReviewSelection([]);
@@ -242,7 +242,7 @@ export function TodayPlanner() {
     setReviewSelection((currentIds) => currentIds.includes(id) ? currentIds.filter((item) => item !== id) : [...currentIds, id]);
   }
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">NOVA</span><p>Opening your day…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">AUREA</span><p>Opening your day…</p></div>;
 
   const hours = Array.from({ length: state.settings.dayEndHour - state.settings.dayStartHour + 1 }, (_, index) => state.settings.dayStartHour + index);
   const grouped = state.categories.map((category) => ({ category, tasks: unscheduledTasks.filter((task) => task.categoryId === category.id) })).filter((group) => group.tasks.length > 0);
@@ -302,7 +302,7 @@ export function TodayPlanner() {
   return (
     <>
       <header className="page-header">
-        <div><p className="mobile-brand">NOVA</p><span className="eyebrow">TODAY</span><h1>{formatLongDate(selectedDate)}</h1><p className="subtitle">A calmer place for everything your day needs.</p></div>
+        <div><p className="mobile-brand">AUREA</p><span className="eyebrow">TODAY</span><h1>{formatLongDate(selectedDate)}</h1><p className="subtitle">A calmer place for everything your day needs.</p></div>
         <div className="header-actions">{unfinished.length > 0 && <button className="soft-button desktop-only" onClick={openReview}>Evening review · {unfinished.length}</button>}<button className="primary-button" onClick={() => setTaskModal({ open: true })}>＋ Add task</button></div>
       </header>
 

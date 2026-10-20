@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { addDays, dateKey, durationInputParts, durationToMinutes, googleMapsUrl, parseDateKey, type DurationUnit } from "@/lib/nova/date";
-import { useNova } from "./nova-provider";
-import type { Recurrence, Task, TaskStatus, TaskSubtask } from "@/lib/nova/types";
+import { addDays, dateKey, durationInputParts, durationToMinutes, googleMapsUrl, parseDateKey, type DurationUnit } from "@/lib/aurea/date";
+import { useAurea } from "./aurea-provider";
+import type { Recurrence, Task, TaskStatus, TaskSubtask } from "@/lib/aurea/types";
 
 const weekdays = [
   [0, "Sun"], [1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"], [5, "Fri"], [6, "Sat"],
@@ -26,7 +26,7 @@ export function TaskModal({
   defaultTime?: string;
   occurrenceDate?: string;
 }) {
-  const { state, addTask, updateTask, deleteTask } = useNova();
+  const { state, addTask, updateTask, deleteTask } = useAurea();
   const [showMore, setShowMore] = useState(Boolean(task));
   const [recurrence, setRecurrence] = useState<Recurrence>(task?.recurrence ?? "none");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>(task?.recurrenceDays ?? []);

@@ -1,4 +1,4 @@
-# NOVA V1.1 — Feedback fixes
+# Aurea V1.1 — Feedback fixes
 
 ## Today
 - Compact progress strip; quote removed.

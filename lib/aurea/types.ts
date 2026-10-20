@@ -63,7 +63,7 @@ export type HabitSubtask = {
 };
 
 /**
- * A NOVA habit is a repeatable routine. The routine can contain a checklist of
+ * A Aurea habit is a repeatable routine. The routine can contain a checklist of
  * subtasks (for example "Morning Routine" → water, skincare, vitamins).
  */
 export type Habit = {
@@ -97,7 +97,7 @@ export type ExternalCalendarEvent = {
   source: "apple" | "google" | "ics" | "sample";
 };
 
-export type NovaSettings = {
+export type AureaSettings = {
   displayName: string;
   profileImage?: string;
   profileSetupComplete: boolean;
@@ -111,7 +111,7 @@ export type NovaSettings = {
   timeZone: string;
 };
 
-export type NovaState = {
+export type AureaState = {
   version: 6;
   categories: Category[];
   projects: Project[];
@@ -123,6 +123,6 @@ export type NovaState = {
   /** task id -> occurrence key -> completed subtask ids. Non-recurring tasks use __task. */
   taskSubtaskCompletions: Record<string, Record<string, string[]>>;
   externalEvents: ExternalCalendarEvent[];
-  settings: NovaSettings;
+  settings: AureaSettings;
   lastUpdatedAt: string;
 };

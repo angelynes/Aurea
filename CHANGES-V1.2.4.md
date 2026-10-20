@@ -1,4 +1,4 @@
-# NOVA V1.2.4
+# Aurea V1.2.4
 
 ## Task subtasks
 

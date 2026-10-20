@@ -1,4 +1,4 @@
-# NOVA V1.2 — Planning, routines, calendar & personalization
+# Aurea V1.2 — Planning, routines, calendar & personalization
 
 ## Today
 - Scheduled task metadata now shows a readable start–end range and a separate duration label.

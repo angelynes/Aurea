@@ -1,4 +1,4 @@
-const CACHE = "nova-shell-v1";
+const CACHE = "aurea-shell-v1";
 const SHELL = ["/today", "/calendar", "/projects", "/settings"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => undefined));

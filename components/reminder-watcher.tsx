@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { habitOccursOn, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/nova/date";
-import { useNova } from "./nova-provider";
+import { habitOccursOn, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
+import { useAurea } from "./aurea-provider";
 
 export function ReminderWatcher() {
-  const { state, hydrated } = useNova();
+  const { state, hydrated } = useAurea();
 
   useEffect(() => {
     if (!hydrated || !state.settings.notificationsEnabled || typeof Notification === "undefined" || Notification.permission !== "granted") return;
@@ -20,7 +20,7 @@ export function ReminderWatcher() {
         if (start == null) return;
         const trigger = start - (task.reminderMinutes ?? 0) - (task.travelTimeMinutes ?? 0);
         if (nowMinutes < trigger || nowMinutes > trigger + 1) return;
-        const key = `nova-notified-task-${task.id}-${today}-${trigger}`;
+        const key = `aurea-notified-task-${task.id}-${today}-${trigger}`;
         if (window.localStorage.getItem(key)) return;
         const reminder = task.reminderMinutes ?? 0;
         const body = task.travelTimeMinutes
@@ -35,9 +35,9 @@ export function ReminderWatcher() {
         if (start == null) return;
         const trigger = start - (habit.reminderMinutes ?? 0);
         if (nowMinutes < trigger || nowMinutes > trigger + 1) return;
-        const key = `nova-notified-habit-${habit.id}-${today}-${trigger}`;
+        const key = `aurea-notified-habit-${habit.id}-${today}-${trigger}`;
         if (window.localStorage.getItem(key)) return;
-        new Notification(habit.name, { body: "NOVA routine reminder", icon: "/icons/icon-192.png" });
+        new Notification(habit.name, { body: "Aurea routine reminder", icon: "/icons/icon-192.png" });
         window.localStorage.setItem(key, "1");
       });
     }

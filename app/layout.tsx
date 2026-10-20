@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { NovaProvider } from "@/components/nova-provider";
+import { AureaProvider } from "@/components/aurea-provider";
 import { ReminderWatcher } from "@/components/reminder-watcher";
 import { PwaRegister } from "@/components/pwa-register";
 
 export const metadata: Metadata = {
-  title: { default: "NOVA Planner", template: "%s · NOVA" },
+  title: { default: "Aurea Planner", template: "%s · Aurea" },
   description: "A calm personal planner for your day, projects, habits and calendar.",
-  applicationName: "NOVA",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "NOVA" },
+  applicationName: "Aurea",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Aurea" },
 };
 
 export const viewport: Viewport = {
@@ -21,11 +21,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
-        <NovaProvider>
+        <AureaProvider>
           <PwaRegister />
           <ReminderWatcher />
           {children}
-        </NovaProvider>
+        </AureaProvider>
       </body>
     </html>
   );

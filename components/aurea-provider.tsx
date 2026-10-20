@@ -3,31 +3,37 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Provider, Session, SupabaseClient } from "@supabase/supabase-js";
 import { createClient, hasSupabaseConfig } from "@/lib/supabase/client";
-import { createSeedState } from "@/lib/nova/seed";
-import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/nova/date";
+import { createSeedState } from "@/lib/aurea/seed";
+import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
   Category,
   ExternalCalendarEvent,
   Habit,
-  NovaSettings,
-  NovaState,
+  AureaSettings,
+  AureaState,
   Project,
   Task,
   TaskStatus,
   ThemeId,
-} from "@/lib/nova/types";
+} from "@/lib/aurea/types";
 
-const STORAGE_KEY = "nova-planner-state-v2";
-const GOOGLE_CALENDAR_TOKEN_KEY = "nova-google-calendar-token";
-const GOOGLE_OAUTH_INTENT_KEY = "nova-google-oauth-intent";
+const STORAGE_KEY = "aurea-planner-state-v2";
+const GOOGLE_CALENDAR_TOKEN_KEY = "aurea-google-calendar-token";
+const GOOGLE_OAUTH_INTENT_KEY = "aurea-google-oauth-intent";
+// The app was called NOVA before; carry existing device data over to the new keys.
+const LEGACY_STORAGE_KEYS: Array<[string, string]> = [
+  ["nova-planner-state-v2", STORAGE_KEY],
+  ["nova-google-calendar-token", GOOGLE_CALENDAR_TOKEN_KEY],
+  ["nova-google-oauth-intent", GOOGLE_OAUTH_INTENT_KEY],
+];
 const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 
 type CloudStatus = "local" | "connecting" | "synced" | "error";
 
 type Result = { ok: boolean; message: string };
 
-type NovaContextValue = {
-  state: NovaState;
+type AureaContextValue = {
+  state: AureaState;
   hydrated: boolean;
   addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => string;
   updateTask: (id: string, patch: Partial<Task>) => void;
@@ -50,8 +56,8 @@ type NovaContextValue = {
   toggleHabitSubtask: (habitId: string, subtaskId: string, onDate?: string) => void;
   importExternalEvents: (events: ExternalCalendarEvent[]) => void;
   clearImportedEvents: (source?: ExternalCalendarEvent["source"]) => void;
-  updateSettings: (patch: Partial<NovaSettings>) => void;
-  importState: (next: NovaState) => void;
+  updateSettings: (patch: Partial<AureaSettings>) => void;
+  importState: (next: AureaState) => void;
   resetState: () => void;
   cloudConfigured: boolean;
   cloudStatus: CloudStatus;
@@ -67,9 +73,9 @@ type NovaContextValue = {
   disconnectGoogleCalendar: () => void;
 };
 
-const NovaContext = createContext<NovaContextValue | null>(null);
+const AureaContext = createContext<AureaContextValue | null>(null);
 
-function stamp(state: NovaState): NovaState {
+function stamp(state: AureaState): AureaState {
   return { ...state, lastUpdatedAt: new Date().toISOString() };
 }
 
@@ -92,7 +98,7 @@ const CATEGORY_COLOR_MIGRATION: Record<string, string> = {
   "#d7e8c8": "#E8F3DD", "#c9d4e8": "#E3EAF6", "#a9ddd7": "#D5F2EF", "#d5e9e7": "#E8F5F3",
 };
 
-function removeLegacyDemoData(state: NovaState): NovaState {
+function removeLegacyDemoData(state: AureaState): AureaState {
   const categories = state.categories.filter((category) => category.id !== "cat-project");
   const projects = state.projects.filter((project) => !LEGACY_DEMO_PROJECT_IDS.has(project.id));
   const tasks = state.tasks
@@ -111,9 +117,9 @@ function removeLegacyDemoData(state: NovaState): NovaState {
   return { ...state, version: 6, categories, projects, tasks, habits, habitCompletions, habitSubtaskCompletions, taskSubtaskCompletions, externalEvents };
 }
 
-function normalizeState(input: unknown): NovaState | null {
+function normalizeState(input: unknown): AureaState | null {
   if (!input || typeof input !== "object") return null;
-  const state = input as Partial<NovaState>;
+  const state = input as Partial<AureaState>;
   if (!Array.isArray(state.tasks) || !Array.isArray(state.projects) || !Array.isArray(state.categories)) return null;
 
   const base = createSeedState();
@@ -127,7 +133,7 @@ function normalizeState(input: unknown): NovaState | null {
   settings.dayStartHour = Math.max(0, Math.min(23, Number(settings.dayStartHour ?? 7)));
   settings.dayEndHour = Math.max(settings.dayStartHour + 1, Math.min(47, Number(settings.dayEndHour ?? 22)));
 
-  const normalized: NovaState = {
+  const normalized: AureaState = {
     ...base,
     ...state,
     version: 6,
@@ -171,8 +177,8 @@ function normalizeState(input: unknown): NovaState | null {
   return removeLegacyDemoData(normalized);
 }
 
-export function NovaProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<NovaState>(() => createSeedState());
+export function AureaProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AureaState>(() => createSeedState());
   const [hydrated, setHydrated] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [cloudStatus, setCloudStatus] = useState<CloudStatus>("local");
@@ -183,7 +189,7 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
   const cloudReadyRef = useRef(false);
   const lastRemoteUpdatedAtRef = useRef<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stateRef = useRef<NovaState>(state);
+  const stateRef = useRef<AureaState>(state);
 
   const cloudConfigured = hasSupabaseConfig();
 
@@ -191,6 +197,10 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
+      for (const [legacyKey, key] of LEGACY_STORAGE_KEYS) {
+        const legacy = window.localStorage.getItem(legacyKey);
+        if (legacy !== null && window.localStorage.getItem(key) === null) window.localStorage.setItem(key, legacy);
+      }
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = normalizeState(JSON.parse(stored));
@@ -325,7 +335,7 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [state, session, hydrated]);
 
-  const mutate = useCallback((recipe: (current: NovaState) => NovaState) => {
+  const mutate = useCallback((recipe: (current: AureaState) => AureaState) => {
     const next = stamp(recipe(stateRef.current));
     stateRef.current = next;
     setState(next);
@@ -582,8 +592,8 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
   }, [mutate]);
 
   const clearImportedEvents = useCallback((source?: ExternalCalendarEvent["source"]) => { mutate((current) => ({ ...current, externalEvents: source ? current.externalEvents.filter((event) => event.source !== source) : [] })); }, [mutate]);
-  const updateSettings = useCallback((patch: Partial<NovaSettings>) => { mutate((current) => ({ ...current, settings: { ...current.settings, ...patch } })); }, [mutate]);
-  const importState = useCallback((next: NovaState) => { const normalized = normalizeState(next); if (normalized) { const stamped = stamp(normalized); stateRef.current = stamped; setState(stamped); } }, []);
+  const updateSettings = useCallback((patch: Partial<AureaSettings>) => { mutate((current) => ({ ...current, settings: { ...current.settings, ...patch } })); }, [mutate]);
+  const importState = useCallback((next: AureaState) => { const normalized = normalizeState(next); if (normalized) { const stamped = stamp(normalized); stateRef.current = stamped; setState(stamped); } }, []);
   const resetState = useCallback(() => { const next = createSeedState(); stateRef.current = next; setState(next); }, []);
 
   const sendMagicLink = useCallback(async (email: string) => {
@@ -593,7 +603,7 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
     setCloudStatus("connecting");
     const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/settings` } });
     if (error) { setCloudStatus("error"); return { ok: false, message: error.message }; }
-    return { ok: true, message: "Check your email for NOVA's sign-in link or code." };
+    return { ok: true, message: "Check your email for Aurea's sign-in link or code." };
   }, []);
 
   const verifyEmailOtp = useCallback(async (email: string, token: string) => {
@@ -702,7 +712,7 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
     clearImportedEvents("google");
   }, [clearImportedEvents]);
 
-  const value = useMemo<NovaContextValue>(() => ({
+  const value = useMemo<AureaContextValue>(() => ({
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
@@ -718,11 +728,11 @@ export function NovaProvider({ children }: { children: React.ReactNode }) {
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
   ]);
 
-  return <NovaContext.Provider value={value}>{children}</NovaContext.Provider>;
+  return <AureaContext.Provider value={value}>{children}</AureaContext.Provider>;
 }
 
-export function useNova() {
-  const context = useContext(NovaContext);
-  if (!context) throw new Error("useNova must be used inside NovaProvider");
+export function useAurea() {
+  const context = useContext(AureaContext);
+  if (!context) throw new Error("useAurea must be used inside AureaProvider");
   return context;
 }

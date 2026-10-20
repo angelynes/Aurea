@@ -1,4 +1,4 @@
-# NOVA V1.2.2 — scheduling & polish pass
+# Aurea V1.2.2 — scheduling & polish pass
 
 This patch adds the September 18 feedback items.
 
@@ -19,7 +19,7 @@ This patch adds the September 18 feedback items.
 ## Changed
 
 - Suggested category palettes are now lighter, softer pastels across Lavender, Minimal, Blush, and Aqua.
-- Existing categories using NOVA's old built-in palette colors migrate to the new lighter equivalents. Custom colors are left alone.
+- Existing categories using Aurea's old built-in palette colors migrate to the new lighter equivalents. Custom colors are left alone.
 - Duration labels now understand multi-hour and multi-day values.
 - Long duration time ranges show next-day offsets such as `11:00 PM - 1:00 AM (+1d)`.
 
