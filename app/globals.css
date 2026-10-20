@@ -903,7 +903,11 @@ html[data-theme="aqua"] body { background:radial-gradient(circle at 78% 0%,rgba(
 /* Multiple reminders picker */
 .reminder-picker { grid-column: 1 / -1; }
 .reminder-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.reminder-chip { min-height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: white; color: var(--ink); font-size: 12px; cursor: pointer; }
-.reminder-chip:hover { background: color-mix(in srgb, var(--very-light) 35%, white); }
-.reminder-chip.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-weight: 600; }
+.reminder-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 6px 0 12px; border: 1px solid var(--primary); border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-size: 12px; font-weight: 600; }
+.reminder-chip button { width: 22px; height: 22px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
+.reminder-chip button:hover { background: color-mix(in srgb, var(--primary) 18%, white); }
+.reminder-add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.reminder-add-row input { width: 76px; }
+.reminder-add-row select { width: auto; }
+.reminder-before { color: #736a86; font-size: 13px; }
 .reminder-hint { color: #9b93a8; font-size: 11px; }

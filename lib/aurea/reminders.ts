@@ -10,19 +10,17 @@ export type DueReminder = {
   body: string;
 };
 
-/** Reminder choices offered in the task and routine editors, in minutes before the start. */
-export const REMINDER_OPTIONS: { minutes: number; label: string }[] = [
-  { minutes: 0, label: "At start" },
-  { minutes: 5, label: "5 min before" },
-  { minutes: 10, label: "10 min before" },
-  { minutes: 15, label: "15 min before" },
-  { minutes: 30, label: "30 min before" },
-  { minutes: 60, label: "1 hour before" },
-  { minutes: 120, label: "2 hours before" },
-  { minutes: DAY, label: "1 day before" },
-  { minutes: 2 * DAY, label: "2 days before" },
-  { minutes: 7 * DAY, label: "1 week before" },
-];
+export type ReminderUnit = "minutes" | "hours" | "days" | "weeks";
+
+export const REMINDER_UNIT_MINUTES: Record<ReminderUnit, number> = { minutes: 1, hours: 60, days: DAY, weeks: 7 * DAY };
+
+/** "At start", "15 minutes before", "1 day before", "2 weeks before" … */
+export function formatReminder(minutes: number) {
+  if (minutes === 0) return "At start";
+  const unit = (["weeks", "days", "hours"] as const).find((name) => minutes % REMINDER_UNIT_MINUTES[name] === 0) ?? "minutes";
+  const amount = minutes / REMINDER_UNIT_MINUTES[unit];
+  return `${amount} ${amount === 1 ? unit.slice(0, -1) : unit} before`;
+}
 
 /** All reminder offsets for a task or routine. Older saves only have reminderMinutes. */
 export function reminderOffsets(item: { reminders?: number[]; reminderMinutes?: number }): number[] {
@@ -38,15 +36,9 @@ export function reminderFields(offsets: number[]) {
 
 function leadLabel(minutes: number, startTime: string) {
   if (minutes === 0) return "Starting now";
-  if (minutes < 60) return `Starts in ${minutes} minutes`;
-  if (minutes < DAY) {
-    const hours = minutes / 60;
-    return `Starts in ${Number.isInteger(hours) ? hours : hours.toFixed(1)} hour${hours === 1 ? "" : "s"}`;
-  }
-  const days = Math.round(minutes / DAY);
-  if (days === 1) return `Tomorrow at ${startTime}`;
-  if (days === 7) return `In 1 week at ${startTime}`;
-  return `In ${days} days at ${startTime}`;
+  if (minutes === DAY) return `Tomorrow at ${startTime}`;
+  const amount = formatReminder(minutes).replace(/ before$/, "");
+  return minutes % DAY === 0 ? `In ${amount} at ${startTime}` : `Starts in ${amount}`;
 }
 
 /**
