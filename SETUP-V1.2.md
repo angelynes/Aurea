@@ -33,7 +33,7 @@ The browser-only calendar beta stores the Google provider access token locally. 
 
 ## 4. Apple login
 
-The Apple sign-in button is implemented, but Apple's provider setup must be completed in Supabase/Apple Developer before it can work. Enable **Apple** under Supabase Authentication providers and configure the Apple Services ID / secret for your Aurea domain.
+The Apple sign-in button has been removed because the Apple provider is not enabled. To add it later, enable **Apple** under Supabase Authentication providers, configure the Apple Services ID / secret for your Aurea domain (requires an Apple Developer Program membership), and add the button back in Settings.
 
 ## 5. Apple Calendar
 

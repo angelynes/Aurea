@@ -235,9 +235,8 @@ Supported sign-in options in the UI:
 - email OTP/code
 - email magic link
 - Google OAuth
-- Apple OAuth
 
-Provider configuration is still required in Supabase before Google or Apple buttons can work.
+The Google provider must be enabled in Supabase for the Google button to work.
 
 ### Email OTP / Home Screen sign-in
 
@@ -264,9 +263,7 @@ Google provider setup requires:
 
 ### Apple Sign-In
 
-Apple Sign-In requires Apple Developer configuration.
-
-For a public/native Apple version, an Apple Developer Program membership is expected to be needed.
+Apple Sign-In is not offered right now. Adding it later requires an Apple Developer Program membership and enabling the Apple provider in Supabase.
 
 ---
 

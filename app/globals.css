@@ -809,7 +809,7 @@ html[data-theme="aqua"] body { background:radial-gradient(circle at 78% 0%,rgba(
 .otp-form { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:end; }
 .social-login-divider { display:flex; align-items:center; gap:8px; color:#a099a5; font-size:9px; }
 .social-login-divider::before, .social-login-divider::after { content:""; height:1px; flex:1; background:var(--line); }
-.social-login-buttons { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.social-login-buttons { display:grid; grid-template-columns:1fr; gap:8px; }
 .oauth-button { min-height:42px; border:1px solid var(--line-strong); border-radius:12px; background:white; cursor:pointer; color:var(--ink); }
 .oauth-button:hover { background:color-mix(in srgb,var(--very-light) 35%,white); }
 .auth-message { padding:8px 10px; border-radius:10px; background:color-mix(in srgb,var(--very-light) 55%,white); }

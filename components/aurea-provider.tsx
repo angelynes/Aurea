@@ -64,7 +64,7 @@ type AureaContextValue = {
   cloudEmail: string | null;
   sendMagicLink: (email: string) => Promise<Result>;
   verifyEmailOtp: (email: string, token: string) => Promise<Result>;
-  signInWithProvider: (provider: "google" | "apple") => Promise<Result>;
+  signInWithProvider: (provider: "google") => Promise<Result>;
   signOutCloud: () => Promise<void>;
   syncNow: () => Promise<void>;
   googleCalendarConnected: boolean;
@@ -620,13 +620,13 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     return { ok: true, message: "Signed in. This device will stay signed in." };
   }, [loadCloud]);
 
-  const signInWithProvider = useCallback(async (provider: "google" | "apple") => {
+  const signInWithProvider = useCallback(async (provider: "google") => {
     const client = supabaseRef.current ?? createClient();
     if (!client) return { ok: false, message: "Supabase is not configured yet." };
     supabaseRef.current = client;
     const { error } = await client.auth.signInWithOAuth({ provider: provider as Provider, options: { redirectTo: `${window.location.origin}/settings` } });
     if (error) return { ok: false, message: error.message };
-    return { ok: true, message: `Opening ${provider === "google" ? "Google" : "Apple"} sign in…` };
+    return { ok: true, message: "Opening Google sign in…" };
   }, []);
 
   const signOutCloud = useCallback(async () => {
