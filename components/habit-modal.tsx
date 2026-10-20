@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { addDays, dateKey, durationInputParts, durationToMinutes, type DurationUnit } from "@/lib/aurea/date";
 import { THEME_META } from "@/lib/aurea/theme";
 import { useAurea } from "./aurea-provider";
+import { ReminderPicker } from "./reminder-picker";
+import { reminderFields, reminderOffsets } from "@/lib/aurea/reminders";
 import type { Habit, HabitSubtask } from "@/lib/aurea/types";
 
 const weekdays = [
@@ -57,8 +59,7 @@ export function HabitModal({
       alert("Choose at least one day for this routine.");
       return;
     }
-    const reminderRaw = String(data.get("reminderMinutes") || "");
-    const reminderMinutes = reminderRaw ? Number(reminderRaw) : undefined;
+    const reminderChoice = data.getAll("reminders").map(Number).filter((value) => Number.isFinite(value) && value >= 0);
     const durationMinutes = durationToMinutes(durationValue, durationUnit);
     const payload = {
       name,
@@ -66,7 +67,7 @@ export function HabitModal({
       weekdays: selectedDays,
       scheduledTime: String(data.get("scheduledTime") || "") || undefined,
       durationMinutes,
-      reminderMinutes: Number.isFinite(reminderMinutes) && (reminderMinutes ?? -1) >= 0 ? reminderMinutes : undefined,
+      ...reminderFields(reminderChoice),
       color,
       subtasks: subtasks.filter((item) => item.title.trim()).map((item) => ({ ...item, title: item.title.trim() })),
       recurrenceEndDate: habit?.recurrenceEndDate,
@@ -119,7 +120,7 @@ export function HabitModal({
         <div className="form-grid two">
           <label className="field"><span>Time</span><input name="scheduledTime" type="time" defaultValue={habit?.scheduledTime ?? ""} /></label>
           <label className="field"><span>Duration</span><div className="duration-input-row"><input type="number" min="0" step="0.25" inputMode="decimal" value={durationValue} onChange={(event) => setDurationValue(event.target.value)} placeholder="No duration" /><select value={durationUnit} onChange={(event) => setDurationUnit(event.target.value as DurationUnit)}><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days</option></select></div><small className="field-help">Leave the amount blank for no duration.</small></label>
-          <label className="field"><span>Reminder</span><select name="reminderMinutes" defaultValue={habit?.reminderMinutes == null ? "" : String(habit.reminderMinutes)}><option value="">No reminder</option><option value="0">At start</option><option value="5">5 minutes before</option><option value="10">10 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option></select></label>
+          <ReminderPicker key={habit?.id ?? "new"} initial={habit ? reminderOffsets(habit) : []} />
           <label className="field"><span>Habit color</span><div className="habit-color-control"><input type="color" value={color} onChange={(event) => setColor(event.target.value)} /><span style={{ background: color }} /></div></label>
         </div>
 

@@ -49,7 +49,10 @@ export type Task = {
   excludedDates?: string[];
   location?: string;
   travelTimeMinutes?: number;
+  /** Legacy single reminder; kept in sync with the first entry of `reminders`. */
   reminderMinutes?: number;
+  /** Minutes before the start for each reminder (0 = at start). */
+  reminders?: number[];
   order?: number;
   completedAt?: string;
   completedDates?: string[];
@@ -76,7 +79,10 @@ export type Habit = {
   weekdays?: number[];
   scheduledTime?: string;
   durationMinutes?: number;
+  /** Legacy single reminder; kept in sync with the first entry of `reminders`. */
   reminderMinutes?: number;
+  /** Minutes before the start for each reminder (0 = at start). */
+  reminders?: number[];
   color?: string;
   subtasks?: HabitSubtask[];
   recurrenceEndDate?: string;

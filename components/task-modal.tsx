@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { addDays, dateKey, durationInputParts, durationToMinutes, googleMapsUrl, parseDateKey, type DurationUnit } from "@/lib/aurea/date";
 import { useAurea } from "./aurea-provider";
+import { ReminderPicker } from "./reminder-picker";
+import { reminderFields, reminderOffsets } from "@/lib/aurea/reminders";
 import type { Recurrence, Task, TaskStatus, TaskSubtask } from "@/lib/aurea/types";
 
 const weekdays = [
@@ -68,7 +70,7 @@ export function TaskModal({
     categoryId: task?.categoryId ?? state.categories[0]?.id ?? "",
     projectId: task?.projectId ?? defaultProjectId ?? "",
     status: task?.status ?? "todo",
-    reminderMinutes: task?.reminderMinutes,
+    reminders: task ? reminderOffsets(task) : [],
     travelTimeMinutes: task?.travelTimeMinutes,
     notes: task?.notes ?? "",
   }), [task, defaultDate, defaultProjectId, defaultTime, state.categories]);
@@ -93,10 +95,9 @@ export function TaskModal({
     if (!projectId && !savedDueDate) savedDueDate = defaultDate ?? dateKey();
     if (recurrence !== "none" && !savedDueDate) savedDueDate = defaultDate ?? dateKey();
     const scheduledTime = String(data.get("scheduledTime") || "") || undefined;
-    const reminderRaw = String(data.get("reminderMinutes") || "");
     const travelRaw = String(data.get("travelTimeMinutes") || "");
     const durationMinutes = durationToMinutes(durationValue, durationUnit);
-    const reminderMinutes = reminderRaw ? Number(reminderRaw) : undefined;
+    const reminderChoice = data.getAll("reminders").map(Number).filter((value) => Number.isFinite(value) && value >= 0);
     const travelTimeMinutes = travelRaw ? Number(travelRaw) : undefined;
 
     const payload = {
@@ -115,7 +116,7 @@ export function TaskModal({
       excludedDates: task?.excludedDates ?? [],
       location: location.trim() || undefined,
       travelTimeMinutes: Number.isFinite(travelTimeMinutes) && (travelTimeMinutes ?? 0) > 0 ? travelTimeMinutes : undefined,
-      reminderMinutes: Number.isFinite(reminderMinutes) && (reminderMinutes ?? -1) >= 0 ? reminderMinutes : undefined,
+      ...reminderFields(reminderChoice),
       completedAt: status === "completed" ? (task?.completedAt ?? new Date().toISOString()) : undefined,
       completedDates: task?.completedDates ?? [],
       order: task?.order,
@@ -201,7 +202,7 @@ export function TaskModal({
               {selectedProjectId && <label className="field"><span>Status</span><select name="status" defaultValue={initial.status}><option value="todo">To Do</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select></label>}
               <label className="field"><span>Duration</span><div className="duration-input-row"><input type="number" min="0" step="0.25" inputMode="decimal" value={durationValue} onChange={(event) => setDurationValue(event.target.value)} placeholder="No duration" /><select value={durationUnit} onChange={(event) => setDurationUnit(event.target.value as DurationUnit)}><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days</option></select></div><small className="field-help">Leave the amount blank for no duration.</small></label>
               <label className="field"><span>Repeat</span><select name="recurrence" value={recurrence} onChange={(event) => setRecurrence(event.target.value as Recurrence)}><option value="none">Never</option><option value="daily">Daily</option><option value="weekdays">Weekdays</option><option value="weekends">Weekends</option><option value="weekly">Weekly / selected days</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>
-              <label className="field"><span>Reminder</span><select name="reminderMinutes" defaultValue={initial.reminderMinutes == null ? "" : String(initial.reminderMinutes)}><option value="">No reminder</option><option value="0">At start time</option><option value="5">5 minutes before</option><option value="10">10 minutes before</option><option value="15">15 minutes before</option><option value="30">30 minutes before</option><option value="60">1 hour before</option></select></label>
+              <ReminderPicker key={key} initial={initial.reminders} />
             </div>
 
             {recurrence === "weekly" && <div className="field full-field repeat-days-field"><span>Repeat on</span><div className="weekday-picker">{weekdays.map(([day, label]) => <label key={day}><input type="checkbox" checked={recurrenceDays.includes(day)} onChange={() => toggleRecurrenceDay(day)} /><span>{label}</span></label>)}</div></div>}

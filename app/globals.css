@@ -895,3 +895,15 @@ html[data-theme="aqua"] body { background:radial-gradient(circle at 78% 0%,rgba(
 /* Aurea logo mark next to the wordmark */
 .brand, .brand-mark { display: inline-flex; align-items: center; gap: 10px; }
 .aurea-logo { flex: none; color: var(--primary); }
+
+/* Notes preview on task cards: one line, full text in the task itself */
+.task-notes-preview { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #8a8199; font-size: 11px; font-style: italic; }
+.task-copy .task-notes-preview { font-size: 11px; }
+
+/* Multiple reminders picker */
+.reminder-picker { grid-column: 1 / -1; }
+.reminder-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.reminder-chip { min-height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: white; color: var(--ink); font-size: 12px; cursor: pointer; }
+.reminder-chip:hover { background: color-mix(in srgb, var(--very-light) 35%, white); }
+.reminder-chip.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-weight: 600; }
+.reminder-hint { color: #9b93a8; font-size: 11px; }
