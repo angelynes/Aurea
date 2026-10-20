@@ -6,6 +6,7 @@ import { dateKey, formatShortDate } from "@/lib/aurea/date";
 import { useAurea } from "./aurea-provider";
 import { ProjectModal } from "./project-modal";
 import { TaskModal } from "./task-modal";
+import { AureaLogo } from "@/components/aurea-logo";
 
 const columns: { status: TaskStatus; label: string }[] = [
   { status: "todo", label: "To Do" },
@@ -45,7 +46,7 @@ export function ProjectsBoard() {
     if (selectedProjectId && !activeProjects.some((project) => project.id === selectedProjectId) && activeProjects[0]) setSelectedProjectId(activeProjects[0].id);
   }, [activeProjects, selectedProjectId]);
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">AUREA</span><p>Opening your projects…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />AUREA</span><p>Opening your projects…</p></div>;
 
   function dropStatus(status: TaskStatus) {
     if (!draggedTaskId) return;
@@ -96,7 +97,7 @@ export function ProjectsBoard() {
   return (
     <>
       <header className="page-header">
-        <div><p className="mobile-brand">AUREA</p><span className="eyebrow">PROJECTS</span><h1>Projects</h1><p className="subtitle">Big things feel lighter when every next step has a home.</p></div>
+        <div><p className="mobile-brand"><AureaLogo size={24} />AUREA</p><span className="eyebrow">PROJECTS</span><h1>Projects</h1><p className="subtitle">Big things feel lighter when every next step has a home.</p></div>
         <div className="header-actions"><button className="primary-button" onClick={() => setProjectModal({ open: true })}>＋ New project</button></div>
       </header>
 

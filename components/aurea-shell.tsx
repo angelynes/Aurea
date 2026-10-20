@@ -5,6 +5,7 @@ import Link from "next/link";
 import { THEME_IDS, THEME_META } from "@/lib/aurea/theme";
 import type { ThemeId } from "@/lib/aurea/types";
 import { useAurea } from "./aurea-provider";
+import { AureaLogo } from "@/components/aurea-logo";
 
 const items = [
   { key: "today", label: "Today", href: "/today", icon: "⌂" },
@@ -34,7 +35,7 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
   return (
     <div className="app-shell">
       <aside className="desktop-sidebar">
-        <Link className="brand" href="/today" aria-label="Aurea home">AUREA</Link>
+        <Link className="brand" href="/today" aria-label="Aurea home"><AureaLogo size={34} />AUREA</Link>
         <nav className="sidebar-nav" aria-label="Main navigation">{items.map((item) => <Link key={item.key} className={`nav-item ${active === item.key ? "active" : ""}`} href={item.href}><span className="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}</Link>)}</nav>
         <div className="sidebar-spacer" />
         <Link className="sidebar-new" href="/today?compose=task">＋ New task</Link>
