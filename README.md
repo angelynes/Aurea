@@ -1,10 +1,10 @@
-# NOVA Planner
+# Aurea Planner
 
-NOVA is a responsive personal planner that brings daily planning, projects, calendar events, routines, and cloud sync into one place.
+Aurea is a responsive personal planner that brings daily planning, projects, calendar events, routines, and cloud sync into one place.
 
 The app is designed around a simple idea: **one item can appear in the right place everywhere without being duplicated**. A project task can live inside its project, appear in Today when it is due, and show on the schedule when it has a time.
 
-NOVA currently runs as a responsive web app / PWA and is optimized for both laptop and phone use.
+Aurea currently runs as a responsive web app / PWA and is optimized for both laptop and phone use.
 
 ---
 
@@ -57,7 +57,7 @@ This version includes the September 17–21 planning, personalization, behavior,
 - Task Status only appears when a Project is selected
 - Project task status defaults to **To Do**
 - Project tasks can be left **Undated**, so they stay in the project backlog and do not appear on Today until a date is assigned
-- NOVA uses its own selected time zone for schedule behavior and automatic completion
+- Aurea uses its own selected time zone for schedule behavior and automatic completion
 
 ---
 
@@ -97,10 +97,10 @@ Completing all subtasks can complete the parent routine.
 
 ## Calendar
 
-NOVA includes a clean monthly calendar view designed to stay visually simple.
+Aurea includes a clean monthly calendar view designed to stay visually simple.
 
 - Click a date to reveal its schedule, tasks, and routines
-- NOVA tasks and scheduled routines appear in the calendar
+- Aurea tasks and scheduled routines appear in the calendar
 - Google Calendar read-only sync is available as a beta
 - Google Calendar events can appear in Today and Calendar
 - `.ics` calendar import is supported
@@ -113,7 +113,7 @@ Google Calendar uses Google OAuth with the read-only Calendar scope.
 Current behavior:
 
 - imports the user's primary Google Calendar
-- read-only inside NOVA
+- read-only inside Aurea
 - use **Sync Google** to refresh
 - browser OAuth tokens may eventually require reconnecting
 
@@ -123,7 +123,7 @@ Google Calendar must be enabled and configured in Google Cloud and Supabase befo
 
 The current web/PWA version supports `.ics` import.
 
-Direct access to the iPhone/iPad calendar database requires a future native Apple build using EventKit. NOVA does not fake native Apple Calendar access in the browser.
+Direct access to the iPhone/iPad calendar database requires a future native Apple build using EventKit. Aurea does not fake native Apple Calendar access in the browser.
 
 ---
 
@@ -185,18 +185,18 @@ Users can:
 - choose category colors
 - reorder categories
 - delete categories
-- choose from NOVA's five pastel category presets: Blush Sky (`#FFD1DC`), Sage Mist (`#CFD8C5`), Peach Sorbet (`#FFE4E1`), Lavender Dusk (`#D8BFD8`), and Mint Frost (`#E0F7FA`)
+- choose from Aurea's five pastel category presets: Blush Sky (`#FFD1DC`), Sage Mist (`#CFD8C5`), Peach Sorbet (`#FFE4E1`), Lavender Dusk (`#D8BFD8`), and Mint Frost (`#E0F7FA`)
 - still use a fully custom color picker
 
 ---
 
 ## Themes
 
-NOVA currently includes four account-persistent themes:
+Aurea currently includes four account-persistent themes:
 
 1. **Lavender**
    - soft lavender / purple palette
-   - original NOVA visual identity
+   - original Aurea visual identity
 
 2. **Minimal**
    - neutral, understated, gender-neutral palette
@@ -220,7 +220,7 @@ Onboarding asks for:
 
 - Default display name is `Profile`
 - Users can set their own display name
-- Profile name is saved with NOVA cloud state
+- Profile name is saved with Aurea cloud state
 - Profile photos are supported
 - Profile photos are center-cropped and displayed as a true circular avatar
 
@@ -228,7 +228,7 @@ Onboarding asks for:
 
 ## Authentication
 
-NOVA uses Supabase Auth.
+Aurea uses Supabase Auth.
 
 Supported sign-in options in the UI:
 
@@ -249,7 +249,7 @@ The Supabase Magic Link / OTP email template should contain:
 {{ .Token }}
 ```
 
-NOVA can verify the code directly inside the installed app.
+Aurea can verify the code directly inside the installed app.
 
 ### Google Sign-In
 
@@ -272,7 +272,7 @@ For a public/native Apple version, an Apple Developer Program membership is expe
 
 ## Cloud Sync
 
-NOVA uses Supabase for cloud sync.
+Aurea uses Supabase for cloud sync.
 
 Planner state is stored in:
 
@@ -282,7 +282,7 @@ public.app_state
 
 The app currently stores planner data in the existing JSON state row, so V1.2.4 does not require a new database migration.
 
-Cloud sync is intended to keep the same NOVA account consistent across:
+Cloud sync is intended to keep the same Aurea account consistent across:
 
 - laptop
 - phone
@@ -292,12 +292,12 @@ Cloud sync is intended to keep the same NOVA account consistent across:
 
 ## Email delivery
 
-NOVA uses Supabase Auth together with Resend for authentication email delivery.
+Aurea uses Supabase Auth together with Resend for authentication email delivery.
 
 Typical flow:
 
 ```text
-NOVA
+Aurea
   ↓
 Supabase Auth
   ↓
@@ -305,7 +305,7 @@ Resend sends the email/code
   ↓
 User signs in
   ↓
-Supabase syncs NOVA data
+Supabase syncs Aurea data
 ```
 
 ---
@@ -314,7 +314,7 @@ Supabase syncs NOVA data
 
 Location is currently kept intentionally simple.
 
-A task may contain an optional text location, but NOVA does **not** currently use:
+A task may contain an optional text location, but Aurea does **not** currently use:
 
 - Google Maps API
 - location autocomplete
@@ -328,7 +328,7 @@ These can be added later if needed.
 
 ## Time zones
 
-NOVA has its own time-zone setting.
+Aurea has its own time-zone setting.
 
 Current options include:
 
@@ -357,7 +357,7 @@ The selected time zone is used for:
 - The Today timeline can extend past midnight into the following calendar day. For example, Monday can be configured to show **12 AM Monday through 4 AM Tuesday**. Early Tuesday scheduled items then appear at the bottom of Monday's extended schedule as well as in Tuesday's own view.
 - Timeline hour labels use `+1` for next-day hours.
 - Scheduled tasks with overnight or multi-day durations auto-complete only after their true end date/time. Habits/routines still never auto-complete.
-- Category suggestions use a lighter pastel palette across every theme. Known old NOVA palette colors migrate automatically; custom colors are preserved.
+- Category suggestions use a lighter pastel palette across every theme. Known old Aurea palette colors migrate automatically; custom colors are preserved.
 - Profile photos use a stricter center crop and circular mask in both Settings and the sidebar.
 
 ## Current completion behavior
@@ -379,7 +379,7 @@ They always require the user to personally check them.
 
 ## Current platform
 
-NOVA currently runs as:
+Aurea currently runs as:
 
 - responsive web app
 - installable PWA / Home Screen app
@@ -427,7 +427,7 @@ http://localhost:3000
 
 ## Supabase environment variables
 
-NOVA expects:
+Aurea expects:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -449,17 +449,17 @@ GitHub
    ↓
 Vercel
    ↓
-Existing NOVA production domain
+Existing Aurea production domain
 ```
 
 The GitHub repository is connected to the existing Vercel project.
 
-To update NOVA:
+To update Aurea:
 
 1. upload or commit changed files to the existing repository
 2. commit to `main`
 3. Vercel automatically creates a new deployment
-4. once the deployment is Ready, the existing NOVA domain serves the latest production version
+4. once the deployment is Ready, the existing Aurea domain serves the latest production version
 
 There is no need to create a new Vercel project or change the production domain for each update.
 
@@ -484,7 +484,7 @@ Advanced Maps/location features and native Apple Calendar access are intentional
 
 ## Product direction
 
-NOVA is designed to stay:
+Aurea is designed to stay:
 
 - aesthetic
 - minimal
