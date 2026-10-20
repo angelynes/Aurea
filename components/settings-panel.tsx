@@ -74,10 +74,16 @@ export function SettingsPanel() {
     connectGoogleCalendar,
     syncGoogleCalendar,
     disconnectGoogleCalendar,
+    pushSupport,
+    pushEnabled,
+    enablePush,
+    disablePush,
   } = useAurea();
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [cloudMessage, setCloudMessage] = useState("");
+  const [pushMessage, setPushMessage] = useState("");
+  const [pushBusy, setPushBusy] = useState(false);
   const [calendarMessage, setCalendarMessage] = useState("");
   const [newCategory, setNewCategory] = useState({ name: "", color: "#B29CE4" });
   const [daySaveMessage, setDaySaveMessage] = useState("");
@@ -96,6 +102,23 @@ export function SettingsPanel() {
     const permission = await Notification.requestPermission();
     updateSettings({ notificationsEnabled: permission === "granted" });
   }
+
+  async function togglePush() {
+    setPushBusy(true);
+    const result = pushEnabled ? await disablePush() : await enablePush();
+    setPushMessage(result.message);
+    setPushBusy(false);
+  }
+
+  const pushStatus = !cloudEmail
+    ? "Sign in under Account & cloud sync to turn this on."
+    : pushSupport === "needs-install"
+      ? "On iPhone and iPad, add Aurea to your Home Screen first (Share → Add to Home Screen), then open it from there."
+      : pushSupport === "not-configured"
+        ? "Not set up on the server yet."
+        : pushSupport === "unsupported"
+          ? "This browser does not support push reminders."
+          : pushEnabled ? "On for this device" : "Off for this device";
 
   function exportBackup() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -206,7 +229,7 @@ export function SettingsPanel() {
 
         <section className="panel settings-card">
           <div className="settings-card-heading"><div><span className="settings-icon">◌</span><div><h2>Reminders</h2><p>Browser reminders plus your end-of-day check-in.</p></div></div></div>
-          <div className="settings-fields"><div className="status-row"><div><strong>Browser notifications</strong><small>{typeof window !== "undefined" && "Notification" in window ? `Permission: ${Notification.permission}` : "Not supported in this browser"}</small></div><button className="soft-button" onClick={enableNotifications}>{state.settings.notificationsEnabled ? "Enabled" : "Enable"}</button></div><p className="settings-note">Aurea only sends task/routine notifications when you choose a reminder. Native iPhone notifications will be more reliable once the App Store version is built.</p></div>
+          <div className="settings-fields"><div className="status-row"><div><strong>Browser notifications</strong><small>{typeof window !== "undefined" && "Notification" in window ? `Permission: ${Notification.permission}` : "Not supported in this browser"}</small></div><button className="soft-button" onClick={enableNotifications}>{state.settings.notificationsEnabled ? "Enabled" : "Enable"}</button></div><div className="status-row"><div><strong>Remind me when Aurea is closed</strong><small>{pushStatus}</small></div><button className="soft-button" onClick={togglePush} disabled={pushBusy || !cloudEmail || pushSupport !== "supported"}>{pushBusy ? "Working…" : pushEnabled ? "Turn off" : "Turn on"}</button></div>{pushMessage && <p className="settings-note">{pushMessage}</p>}<p className="settings-note">Aurea only sends task/routine notifications when you choose a reminder. Turn on closed-app reminders on each phone or computer you want them on.</p></div>
         </section>
 
         <section className="panel settings-card wide-card">

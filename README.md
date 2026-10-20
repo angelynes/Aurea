@@ -287,6 +287,25 @@ Cloud sync is intended to keep the same Aurea account consistent across:
 
 ---
 
+## Reminders when Aurea is closed
+
+Signed-in users can turn on **Settings → Reminders → Remind me when Aurea is closed** on each device. On iPhone/iPad this requires adding Aurea to the Home Screen first (iOS 16.4+).
+
+How it works:
+
+- the device subscribes to Web Push and is saved in `push_subscriptions`
+- Supabase `pg_cron` calls `/api/reminders/dispatch` every minute
+- the route reads each subscribed user's synced `app_state`, finds due task/routine reminders (`lib/aurea/reminders.ts`), and sends them with `web-push`
+- `sent_reminders` makes sure each reminder is sent once
+
+Setup:
+
+1. Run `supabase/push-reminders.sql` in the Supabase SQL Editor.
+2. Add these Vercel environment variables (Production and Preview): `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET` (from `vault.decrypted_secrets`, name `aurea_cron_secret`). Generate VAPID keys with `npx web-push generate-vapid-keys`.
+3. Redeploy.
+
+Devices without closed-app reminders still get in-app notifications while Aurea is open.
+
 ## Email delivery
 
 Aurea uses Supabase Auth together with Resend for authentication email delivery.

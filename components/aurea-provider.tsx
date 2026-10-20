@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Provider, Session, SupabaseClient } from "@supabase/supabase-js";
 import { createClient, hasSupabaseConfig } from "@/lib/supabase/client";
 import { createSeedState } from "@/lib/aurea/seed";
+import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromPush, type PushSupport } from "@/lib/push";
 import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
   Category,
@@ -71,6 +72,10 @@ type AureaContextValue = {
   connectGoogleCalendar: () => Promise<Result>;
   syncGoogleCalendar: () => Promise<Result>;
   disconnectGoogleCalendar: () => void;
+  pushSupport: PushSupport;
+  pushEnabled: boolean;
+  enablePush: () => Promise<Result>;
+  disablePush: () => Promise<Result>;
 };
 
 const AureaContext = createContext<AureaContextValue | null>(null);
@@ -183,6 +188,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [cloudStatus, setCloudStatus] = useState<CloudStatus>("local");
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupportState, setPushSupportState] = useState<PushSupport>("unsupported");
   const sessionRef = useRef<Session | null>(null);
   const supabaseRef = useRef<SupabaseClient | null>(null);
   const cloudLoadingRef = useRef(false);
@@ -630,6 +637,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOutCloud = useCallback(async () => {
+    await unsubscribeFromPush(supabaseRef.current).catch(() => undefined);
+    setPushEnabled(false);
     await supabaseRef.current?.auth.signOut();
     setSession(null);
     sessionRef.current = null;
@@ -712,6 +721,42 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     clearImportedEvents("google");
   }, [clearImportedEvents]);
 
+  useEffect(() => { setPushSupportState(pushSupport()); }, []);
+
+  // Keep this device's subscription (and its time zone) current whenever the account loads.
+  useEffect(() => {
+    const client = supabaseRef.current;
+    if (!session || !client) { setPushEnabled(false); return; }
+    currentPushSubscription().then(async (subscription) => {
+      if (!subscription) { setPushEnabled(false); return; }
+      await subscribeToPush(client, session.user.id, stateRef.current.settings.timeZone).catch(() => undefined);
+      setPushEnabled(true);
+    }).catch(() => setPushEnabled(false));
+  }, [session, state.settings.timeZone]);
+
+  const enablePush = useCallback(async (): Promise<Result> => {
+    const client = supabaseRef.current;
+    if (!client || !session) return { ok: false, message: "Sign in first so Aurea can remind you when it is closed." };
+    try {
+      await subscribeToPush(client, session.user.id, stateRef.current.settings.timeZone);
+      setPushEnabled(true);
+      mutate((current) => ({ ...current, settings: { ...current.settings, notificationsEnabled: true } }));
+      return { ok: true, message: "Reminders are on for this device, even when Aurea is closed." };
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Could not turn on reminders." };
+    }
+  }, [session, mutate]);
+
+  const disablePush = useCallback(async (): Promise<Result> => {
+    try {
+      await unsubscribeFromPush(supabaseRef.current);
+      setPushEnabled(false);
+      return { ok: true, message: "Closed-app reminders are off for this device." };
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Could not turn off reminders." };
+    }
+  }, []);
+
   const value = useMemo<AureaContextValue>(() => ({
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
@@ -719,6 +764,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     updateSettings, importState, resetState, cloudConfigured, cloudStatus, cloudEmail: session?.user.email ?? null,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
+    pushSupport: pushSupportState, pushEnabled, enablePush, disablePush,
   }), [
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
@@ -726,6 +772,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     updateSettings, importState, resetState, cloudConfigured, cloudStatus, session,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
+    pushSupportState, pushEnabled, enablePush, disablePush,
   ]);
 
   return <AureaContext.Provider value={value}>{children}</AureaContext.Provider>;

@@ -1,43 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { habitOccursOn, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
+import { zonedNow } from "@/lib/aurea/date";
+import { dueReminders } from "@/lib/aurea/reminders";
 import { useAurea } from "./aurea-provider";
 
 export function ReminderWatcher() {
-  const { state, hydrated } = useAurea();
+  const { state, hydrated, pushEnabled } = useAurea();
 
   useEffect(() => {
-    if (!hydrated || !state.settings.notificationsEnabled || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    // Devices with push reminders get them from the server, even while Aurea is open.
+    if (!hydrated || pushEnabled || !state.settings.notificationsEnabled || typeof Notification === "undefined" || Notification.permission !== "granted") return;
 
     function check() {
       const now = zonedNow(state.settings.timeZone);
-      const today = now.dateKey;
-      const nowMinutes = now.minutes;
-
-      state.tasks.filter((task) => task.scheduledTime && task.reminderMinutes != null && taskOccursOn(task, today) && !taskIsCompletedOn(task, today)).forEach((task) => {
-        const start = minutesFromTime(task.scheduledTime);
-        if (start == null) return;
-        const trigger = start - (task.reminderMinutes ?? 0) - (task.travelTimeMinutes ?? 0);
-        if (nowMinutes < trigger || nowMinutes > trigger + 1) return;
-        const key = `aurea-notified-task-${task.id}-${today}-${trigger}`;
+      dueReminders(state, now.dateKey, now.minutes).forEach((reminder) => {
+        const key = `aurea-notified-${reminder.key}`;
         if (window.localStorage.getItem(key)) return;
-        const reminder = task.reminderMinutes ?? 0;
-        const body = task.travelTimeMinutes
-          ? `${reminder > 0 ? `Leave in ${reminder} minutes` : "Time to leave"} · ${task.travelTimeMinutes} min travel${task.location ? ` · ${task.location}` : ""}`
-          : `${reminder > 0 ? `Starts in ${reminder} minutes` : "Starting now"} · ${task.scheduledTime}`;
-        new Notification(task.title, { body, icon: "/icons/icon-192.png" });
-        window.localStorage.setItem(key, "1");
-      });
-
-      state.habits.filter((habit) => habit.scheduledTime && habit.reminderMinutes != null && habitOccursOn(habit, today) && !(state.habitCompletions[habit.id] ?? []).includes(today)).forEach((habit) => {
-        const start = minutesFromTime(habit.scheduledTime);
-        if (start == null) return;
-        const trigger = start - (habit.reminderMinutes ?? 0);
-        if (nowMinutes < trigger || nowMinutes > trigger + 1) return;
-        const key = `aurea-notified-habit-${habit.id}-${today}-${trigger}`;
-        if (window.localStorage.getItem(key)) return;
-        new Notification(habit.name, { body: "Aurea routine reminder", icon: "/icons/icon-192.png" });
+        new Notification(reminder.title, { body: reminder.body, icon: "/icons/icon-192.png" });
         window.localStorage.setItem(key, "1");
       });
     }
@@ -45,7 +25,7 @@ export function ReminderWatcher() {
     check();
     const timer = window.setInterval(check, 30_000);
     return () => window.clearInterval(timer);
-  }, [hydrated, state]);
+  }, [hydrated, pushEnabled, state]);
 
   return null;
 }
