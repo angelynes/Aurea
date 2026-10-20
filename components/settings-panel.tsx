@@ -5,6 +5,7 @@ import { resolvedTimeZone } from "@/lib/aurea/date";
 import { THEME_IDS, THEME_META } from "@/lib/aurea/theme";
 import { useAurea } from "./aurea-provider";
 import type { Category, AureaSettings, AureaState, ThemeId } from "@/lib/aurea/types";
+import { AureaLogo } from "@/components/aurea-logo";
 
 const TIME_ZONES = [
   ["auto", "Automatic (this device)"],
@@ -89,7 +90,7 @@ export function SettingsPanel() {
     if (hydrated) setDayDraft(state.settings);
   }, [hydrated, state.settings]);
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark">AUREA</span><p>Opening settings…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />AUREA</span><p>Opening settings…</p></div>;
 
   async function enableNotifications() {
     if (!("Notification" in window)) { alert("This browser does not support notifications."); return; }
@@ -183,7 +184,7 @@ export function SettingsPanel() {
 
   return (
     <>
-      <header className="page-header settings-header"><div><p className="mobile-brand">AUREA</p><span className="eyebrow">PREFERENCES</span><h1>Settings</h1><p className="subtitle">Tune Aurea around how you actually plan.</p></div></header>
+      <header className="page-header settings-header"><div><p className="mobile-brand"><AureaLogo size={24} />AUREA</p><span className="eyebrow">PREFERENCES</span><h1>Settings</h1><p className="subtitle">Tune Aurea around how you actually plan.</p></div></header>
 
       <div className="settings-grid">
         <section className="panel settings-card">

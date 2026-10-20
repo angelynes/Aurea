@@ -458,7 +458,7 @@ blockquote { margin: 0; max-width: 440px; font-family: Georgia, serif; font-size
   .mobile-nav a.active { color: var(--primary); }
   .mobile-nav a span { font-size: 19px; }
   .mobile-nav small { font-size: 9px; }
-  .mobile-brand { display: block; margin: 0 0 12px; font-size: 19px; text-align: center; }
+  .mobile-brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; font-size: 19px; text-align: center; }
   .page-header { display: block; }
   .page-header .eyebrow { display: none; }
   .page-header h1 { text-align: center; font-size: 28px; }
@@ -891,3 +891,7 @@ html[data-theme="aqua"] body { background:radial-gradient(circle at 78% 0%,rgba(
   .project-backlog-note { display:grid; gap:4px; }
   .kanban-reorder span { display:none; }
 }
+
+/* Aurea logo mark next to the wordmark */
+.brand, .brand-mark { display: inline-flex; align-items: center; gap: 10px; }
+.aurea-logo { flex: none; color: var(--primary); }
