@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useAurea } from "./aurea-provider";
 import { AureaLogo } from "@/components/aurea-logo";
 import { LegalLinks } from "@/components/legal-page";
-import { CalendarIcon, ProjectsIcon, TodayIcon } from "@/components/nav-icons";
+import { SearchPalette } from "@/components/search-palette";
+import { CalendarIcon, ProjectsIcon, SearchIcon, TodayIcon } from "@/components/nav-icons";
 
 const items = [
   { key: "today", label: "Today", href: "/today", Icon: TodayIcon },
@@ -17,6 +18,7 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
   const { state, hydrated, updateSettings } = useAurea();
   const [profileName, setProfileName] = useState("");
   const initials = state.settings.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "P";
+  const [searchOpen, setSearchOpen] = useState(false);
   const showProfileSetup = hydrated && !state.settings.profileSetupComplete;
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
     <div className="app-shell">
       <aside className="desktop-sidebar">
         <Link className="brand" href="/today" aria-label="Aurea home"><AureaLogo size={34} />Aurea</Link>
+        <button type="button" className="sidebar-search" onClick={() => setSearchOpen(true)}><SearchIcon />Search<kbd>⌘K</kbd></button>
         <nav className="sidebar-nav" aria-label="Main navigation">{items.map((item) => <Link key={item.key} className={`nav-item ${active === item.key ? "active" : ""}`} href={item.href}><span className="nav-icon"><item.Icon /></span>{item.label}</Link>)}</nav>
         <div className="sidebar-spacer" />
         <Link className="sidebar-new" href="/today?compose=task">＋ New task</Link>
@@ -43,8 +46,10 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
         </Link>
       </aside>
 
+      <button type="button" className="mobile-search-button" onClick={() => setSearchOpen(true)} aria-label="Search"><SearchIcon /></button>
       <Link className={`mobile-settings-link ${active === "settings" ? "active" : ""}`} href="/settings" aria-label="Settings">⚙</Link>
       <main className="main-content">{children}</main>
+      <SearchPalette open={searchOpen} onOpenChange={setSearchOpen} />
       <nav className="mobile-nav" aria-label="Mobile navigation">{items.map((item) => <Link key={item.key} className={active === item.key ? "active" : ""} href={item.href}><span><item.Icon /></span><small>{item.label}</small></Link>)}</nav>
 
       {showProfileSetup && <div className="modal-backdrop" role="presentation"><form className="modal-card profile-setup-card onboarding-expanded" onSubmit={finishProfileSetup} role="dialog" aria-modal="true" aria-labelledby="profile-setup-title"><div className="profile-setup-mark">Aurea</div><div className="modal-heading profile-setup-heading"><div><span className="eyebrow">WELCOME</span><h2 id="profile-setup-title">Make Aurea yours</h2><p className="subtitle">What should we call you? You can change this later in Settings.</p></div></div><label className="field"><span>Name</span><input autoFocus value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Profile" maxLength={60} /></label><div className="modal-actions profile-setup-actions"><button className="ghost-button" type="button" onClick={() => { setProfileName(""); updateSettings({ displayName: "Profile", profileSetupComplete: true }); }}>Use Profile</button><button className="primary-button" type="submit">Continue</button></div><LegalLinks /></form></div>}

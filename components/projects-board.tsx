@@ -46,6 +46,22 @@ export function ProjectsBoard() {
     if (selectedProjectId && !activeProjects.some((project) => project.id === selectedProjectId) && activeProjects[0]) setSelectedProjectId(activeProjects[0].id);
   }, [activeProjects, selectedProjectId]);
 
+  // Opened from search: /projects?project=<id>, or the "aurea:open-project" event when already here.
+  useEffect(() => {
+    if (!hydrated) return;
+    const open = (id: string | null) => {
+      const project = id ? state.projects.find((item) => item.id === id) : undefined;
+      if (!project) return;
+      if (project.status === "archived") setArchivedOpen(true);
+      else setSelectedProjectId(project.id);
+    };
+    const requested = new URLSearchParams(window.location.search).get("project");
+    if (requested) { open(requested); window.history.replaceState(null, "", "/projects"); }
+    const onOpen = (event: Event) => open((event as CustomEvent<string>).detail);
+    window.addEventListener("aurea:open-project", onOpen);
+    return () => window.removeEventListener("aurea:open-project", onOpen);
+  }, [hydrated, state.projects]);
+
   if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />Aurea</span><p>Opening your projects…</p></div>;
 
   function dropStatus(status: TaskStatus) {
