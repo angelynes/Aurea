@@ -54,14 +54,14 @@ export function CalendarPlanner() {
     setImportMessage(result.message);
   }
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />AUREA</span><p>Opening your calendar…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />Aurea</span><p>Opening your calendar…</p></div>;
 
   const weekdayLabels = state.settings.weekStartsMonday ? ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
   return (
     <>
       <header className="page-header">
-        <div><p className="mobile-brand"><AureaLogo size={24} />AUREA</p><span className="eyebrow">MONTHLY PLANNER</span><h1>Calendar</h1><p className="subtitle">Aurea tasks, routines and connected calendars in one month.</p></div>
+        <div><p className="mobile-brand"><AureaLogo size={24} />Aurea</p><span className="eyebrow">MONTHLY PLANNER</span><h1>Calendar</h1><p className="subtitle">Aurea tasks, routines and connected calendars in one month.</p></div>
         <div className="header-actions calendar-header-actions"><button className="soft-button" onClick={() => fileRef.current?.click()}> Import Apple/.ics</button><button className={googleCalendarConnected ? "soft-button" : "ghost-button"} onClick={googleAction}>G {googleCalendarConnected ? "Sync Google" : "Connect Google"}</button><button className="primary-button" onClick={() => setTaskModal({ open: true })}>＋ Add task</button><input ref={fileRef} hidden type="file" accept=".ics,text/calendar" onChange={importIcsFile} /></div>
       </header>
 

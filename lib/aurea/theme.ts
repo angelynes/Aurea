@@ -7,6 +7,13 @@ export const THEME_META: Record<ThemeId, {
   categoryColors: string[];
   habitColor: string;
 }> = {
+  aurea: {
+    name: "Aurea",
+    description: "Warm cream, plum and gold",
+    preview: ["#3B3550", "#D9A441", "#EDE3CF", "#FBF8F3"],
+    categoryColors: ["#EFE4CC", "#E3DEEC", "#E1E9DD", "#F2E0D6", "#DFE7EE", "#EEDFE5", "#E8E3D6", "#F3EAD0"],
+    habitColor: "#E9D7AE",
+  },
   lavender: {
     name: "Lavender",
     description: "Soft, feminine lavender",

@@ -96,7 +96,7 @@ export function SettingsPanel() {
     if (hydrated) setDayDraft(state.settings);
   }, [hydrated, state.settings]);
 
-  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />AUREA</span><p>Opening settings…</p></div>;
+  if (!hydrated) return <div className="loading-screen"><span className="brand-mark"><AureaLogo size={36} />Aurea</span><p>Opening settings…</p></div>;
 
   async function enableNotifications() {
     if (!("Notification" in window)) { alert("This browser does not support notifications."); return; }
@@ -196,6 +196,14 @@ export function SettingsPanel() {
   }
 
   function chooseTheme(theme: ThemeId) {
+    // Categories still using a built-in palette color move to the same slot in the new palette;
+    // custom colors stay as they are.
+    const palettes = [THEME_META[state.settings.theme], ...THEME_IDS.map((id) => THEME_META[id])].map((meta) => meta.categoryColors.map((color) => color.toLowerCase()));
+    state.categories.forEach((category) => {
+      const slot = palettes.map((palette) => palette.indexOf(category.color.toLowerCase())).find((index) => index >= 0);
+      const next = slot == null ? undefined : THEME_META[theme].categoryColors[slot];
+      if (next && next.toLowerCase() !== category.color.toLowerCase()) updateCategory(category.id, { color: next });
+    });
     updateSettings({ theme });
     setDayDraft((current) => ({ ...current, theme }));
     const firstColor = THEME_META[theme].categoryColors[0];
@@ -207,7 +215,7 @@ export function SettingsPanel() {
 
   return (
     <>
-      <header className="page-header settings-header"><div><p className="mobile-brand"><AureaLogo size={24} />AUREA</p><span className="eyebrow">PREFERENCES</span><h1>Settings</h1><p className="subtitle">Tune Aurea around how you actually plan.</p></div></header>
+      <header className="page-header settings-header"><div><p className="mobile-brand"><AureaLogo size={24} />Aurea</p><span className="eyebrow">PREFERENCES</span><h1>Settings</h1><p className="subtitle">Tune Aurea around how you actually plan.</p></div></header>
 
       <div className="settings-grid">
         <section className="panel settings-card">

@@ -6,24 +6,25 @@ import { THEME_IDS, THEME_META } from "@/lib/aurea/theme";
 import type { ThemeId } from "@/lib/aurea/types";
 import { useAurea } from "./aurea-provider";
 import { AureaLogo } from "@/components/aurea-logo";
+import { CalendarIcon, ProjectsIcon, TodayIcon } from "@/components/nav-icons";
 
 const items = [
-  { key: "today", label: "Today", href: "/today", icon: "⌂" },
-  { key: "calendar", label: "Calendar", href: "/calendar", icon: "▦" },
-  { key: "projects", label: "Projects", href: "/projects", icon: "▱" },
+  { key: "today", label: "Today", href: "/today", Icon: TodayIcon },
+  { key: "projects", label: "Projects", href: "/projects", Icon: ProjectsIcon },
+  { key: "calendar", label: "Calendar", href: "/calendar", Icon: CalendarIcon },
 ] as const;
 
 export function AureaShell({ active, children }: { active: "today" | "calendar" | "projects" | "settings"; children: React.ReactNode }) {
   const { state, hydrated, updateSettings } = useAurea();
   const [profileName, setProfileName] = useState("");
-  const [theme, setTheme] = useState<ThemeId>("lavender");
+  const [theme, setTheme] = useState<ThemeId>("aurea");
   const initials = state.settings.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "P";
   const showProfileSetup = hydrated && !state.settings.profileSetupComplete;
 
   useEffect(() => {
     if (showProfileSetup) {
       setProfileName(state.settings.displayName === "Profile" ? "" : state.settings.displayName);
-      setTheme(state.settings.theme ?? "lavender");
+      setTheme(state.settings.theme ?? "aurea");
     }
   }, [showProfileSetup, state.settings.displayName, state.settings.theme]);
 
@@ -35,8 +36,8 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
   return (
     <div className="app-shell">
       <aside className="desktop-sidebar">
-        <Link className="brand" href="/today" aria-label="Aurea home"><AureaLogo size={34} />AUREA</Link>
-        <nav className="sidebar-nav" aria-label="Main navigation">{items.map((item) => <Link key={item.key} className={`nav-item ${active === item.key ? "active" : ""}`} href={item.href}><span className="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}</Link>)}</nav>
+        <Link className="brand" href="/today" aria-label="Aurea home"><AureaLogo size={34} />Aurea</Link>
+        <nav className="sidebar-nav" aria-label="Main navigation">{items.map((item) => <Link key={item.key} className={`nav-item ${active === item.key ? "active" : ""}`} href={item.href}><span className="nav-icon"><item.Icon /></span>{item.label}</Link>)}</nav>
         <div className="sidebar-spacer" />
         <Link className="sidebar-new" href="/today?compose=task">＋ New task</Link>
         <Link className={`profile-row ${active === "settings" ? "active" : ""}`} href="/settings">
@@ -47,7 +48,7 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
 
       <Link className={`mobile-settings-link ${active === "settings" ? "active" : ""}`} href="/settings" aria-label="Settings">⚙</Link>
       <main className="main-content">{children}</main>
-      <nav className="mobile-nav" aria-label="Mobile navigation">{items.map((item) => <Link key={item.key} className={active === item.key ? "active" : ""} href={item.href}><span aria-hidden="true">{item.icon}</span><small>{item.label}</small></Link>)}</nav>
+      <nav className="mobile-nav" aria-label="Mobile navigation">{items.map((item) => <Link key={item.key} className={active === item.key ? "active" : ""} href={item.href}><span><item.Icon /></span><small>{item.label}</small></Link>)}</nav>
 
       {showProfileSetup && <div className="modal-backdrop" role="presentation"><form className="modal-card profile-setup-card onboarding-expanded" onSubmit={finishProfileSetup} role="dialog" aria-modal="true" aria-labelledby="profile-setup-title"><div className="profile-setup-mark">Aurea</div><div className="modal-heading profile-setup-heading"><div><span className="eyebrow">WELCOME</span><h2 id="profile-setup-title">Make Aurea yours</h2><p className="subtitle">Choose what we should call you and the look you want to start with. Both can be changed later.</p></div></div><label className="field"><span>Name</span><input autoFocus value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Profile" maxLength={60} /></label><div className="onboarding-theme-picker"><span className="field-label">Theme</span><div className="theme-grid onboarding-themes">{THEME_IDS.map((themeId) => { const meta = THEME_META[themeId]; return <button type="button" key={themeId} className={`theme-card ${theme === themeId ? "active" : ""}`} onClick={() => setTheme(themeId)}><span className="theme-swatches">{meta.preview.map((color) => <i key={color} style={{ background: color }} />)}</span><strong>{meta.name}</strong><small>{meta.description}</small></button>; })}</div></div><div className="modal-actions profile-setup-actions"><button className="ghost-button" type="button" onClick={() => { setProfileName(""); updateSettings({ displayName: "Profile", profileSetupComplete: true, theme }); }}>Use Profile</button><button className="primary-button" type="submit">Continue</button></div></form></div>}
     </div>

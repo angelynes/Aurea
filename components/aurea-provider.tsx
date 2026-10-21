@@ -103,7 +103,7 @@ function stamp(state: AureaState): AureaState {
 const LEGACY_DEMO_TASK_IDS = new Set(["task-1", "task-2", "task-3", "task-4", "task-5", "task-6", "task-7"]);
 const LEGACY_DEMO_PROJECT_IDS = new Set(["project-nova", "project-thesis", "project-trip"]);
 const LEGACY_DEMO_HABIT_IDS = new Set(["habit-1", "habit-2", "habit-3"]);
-const VALID_THEMES = new Set<ThemeId>(["lavender", "neutral", "blush", "aqua"]);
+const VALID_THEMES = new Set<ThemeId>(["aurea", "lavender", "neutral", "blush", "aqua"]);
 const LEGACY_PROJECT_DESCRIPTIONS = new Set([
   "an all-in-one planner, with day-to-day tasks and project manager",
   "an all-in-one planner with day-to-day tasks and project manager",
@@ -149,7 +149,7 @@ function normalizeState(input: unknown): AureaState | null {
   const hadCustomName = Boolean(incomingName) && !["darren", "profile"].includes(incomingName.toLowerCase());
   if (!settings.displayName || settings.displayName.trim().toLowerCase() === "darren") settings.displayName = "Profile";
   settings.profileSetupComplete = state.settings?.profileSetupComplete ?? hadCustomName;
-  if (!VALID_THEMES.has(settings.theme as ThemeId)) settings.theme = "lavender";
+  if (!VALID_THEMES.has(settings.theme as ThemeId)) settings.theme = "aurea";
   if (!settings.timeZone) settings.timeZone = "auto";
   settings.dayStartHour = Math.max(0, Math.min(23, Number(settings.dayStartHour ?? 7)));
   settings.dayEndHour = Math.max(settings.dayStartHour + 1, Math.min(47, Number(settings.dayEndHour ?? 22)));
@@ -240,7 +240,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    document.documentElement.dataset.theme = state.settings.theme ?? "lavender";
+    document.documentElement.dataset.theme = state.settings.theme ?? "aurea";
   }, [state, hydrated]);
 
   const loadCloud = useCallback(async (client: SupabaseClient, activeSession: Session) => {

@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Newsreader } from "next/font/google";
 import "./globals.css";
 import { AureaProvider } from "@/components/aurea-provider";
 import { ReminderWatcher } from "@/components/reminder-watcher";
 import { PwaRegister } from "@/components/pwa-register";
+
+const serif = Newsreader({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Aurea Planner", template: "%s · Aurea" },
@@ -12,14 +15,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FAF9FC",
+  themeColor: "#FBF8F3",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="aurea" className={serif.variable}>
       <body>
         <AureaProvider>
           <PwaRegister />

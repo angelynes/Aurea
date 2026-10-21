@@ -1,6 +1,6 @@
 export type TaskStatus = "todo" | "in_progress" | "completed";
 export type Recurrence = "none" | "daily" | "weekdays" | "weekends" | "weekly" | "monthly" | "yearly";
-export type ThemeId = "lavender" | "neutral" | "blush" | "aqua";
+export type ThemeId = "aurea" | "lavender" | "neutral" | "blush" | "aqua";
 
 export type Category = {
   id: string;
