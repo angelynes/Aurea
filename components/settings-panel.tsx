@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { resolvedTimeZone } from "@/lib/aurea/date";
-import { THEME_IDS, THEME_META } from "@/lib/aurea/theme";
+import { paletteSlot, THEME_IDS, THEME_META } from "@/lib/aurea/theme";
 import { useAurea } from "./aurea-provider";
 import type { Category, AureaSettings, AureaState, ThemeId } from "@/lib/aurea/types";
 import { AureaLogo } from "@/components/aurea-logo";
@@ -58,6 +58,7 @@ export function SettingsPanel() {
     updateSettings,
     addCategory,
     updateCategory,
+    updateHabit,
     deleteCategory,
     reorderCategory,
     importState,
@@ -198,12 +199,13 @@ export function SettingsPanel() {
   function chooseTheme(theme: ThemeId) {
     // Categories still using a built-in palette color move to the same slot in the new palette;
     // custom colors stay as they are.
-    const palettes = [THEME_META[state.settings.theme], ...THEME_IDS.map((id) => THEME_META[id])].map((meta) => meta.categoryColors.map((color) => color.toLowerCase()));
     state.categories.forEach((category) => {
-      const slot = palettes.map((palette) => palette.indexOf(category.color.toLowerCase())).find((index) => index >= 0);
+      const slot = paletteSlot(category.color, state.settings.theme);
       const next = slot == null ? undefined : THEME_META[theme].categoryColors[slot];
       if (next && next.toLowerCase() !== category.color.toLowerCase()) updateCategory(category.id, { color: next });
     });
+    const builtInHabitColors = new Set(THEME_IDS.map((id) => THEME_META[id].habitColor.toLowerCase()));
+    state.habits.filter((habit) => habit.color && builtInHabitColors.has(habit.color.toLowerCase())).forEach((habit) => updateHabit(habit.id, { color: THEME_META[theme].habitColor }));
     updateSettings({ theme });
     setDayDraft((current) => ({ ...current, theme }));
     const firstColor = THEME_META[theme].categoryColors[0];

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Provider, Session, SupabaseClient } from "@supabase/supabase-js";
 import { createClient, hasSupabaseConfig } from "@/lib/supabase/client";
 import { createSeedState } from "@/lib/aurea/seed";
+import { LEGACY_CATEGORY_PALETTES, LEGACY_THEMES, THEME_IDS, THEME_META } from "@/lib/aurea/theme";
 import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromPush, type PushSupport } from "@/lib/push";
 import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
@@ -103,7 +104,16 @@ function stamp(state: AureaState): AureaState {
 const LEGACY_DEMO_TASK_IDS = new Set(["task-1", "task-2", "task-3", "task-4", "task-5", "task-6", "task-7"]);
 const LEGACY_DEMO_PROJECT_IDS = new Set(["project-nova", "project-thesis", "project-trip"]);
 const LEGACY_DEMO_HABIT_IDS = new Set(["habit-1", "habit-2", "habit-3"]);
-const VALID_THEMES = new Set<ThemeId>(["aurea", "lavender", "neutral", "blush", "aqua"]);
+const VALID_THEMES = new Set<ThemeId>(THEME_IDS);
+const LEGACY_HABIT_COLORS = new Set(["#c9b7f1", "#b8c2c4", "#f0bdd2", "#9eddd8"]);
+
+/** Built-in category colors from removed themes move to the same slot of the current theme. */
+function migrateLegacyCategoryColor(color: string, theme: ThemeId) {
+  const lower = color.toLowerCase();
+  if (THEME_IDS.some((id) => THEME_META[id].categoryColors.some((item) => item.toLowerCase() === lower))) return color;
+  const slot = LEGACY_CATEGORY_PALETTES.map((palette) => palette.findIndex((item) => item.toLowerCase() === lower)).find((index) => index >= 0);
+  return slot == null ? color : THEME_META[theme].categoryColors[slot];
+}
 const LEGACY_PROJECT_DESCRIPTIONS = new Set([
   "an all-in-one planner, with day-to-day tasks and project manager",
   "an all-in-one planner with day-to-day tasks and project manager",
@@ -149,6 +159,7 @@ function normalizeState(input: unknown): AureaState | null {
   const hadCustomName = Boolean(incomingName) && !["darren", "profile"].includes(incomingName.toLowerCase());
   if (!settings.displayName || settings.displayName.trim().toLowerCase() === "darren") settings.displayName = "Profile";
   settings.profileSetupComplete = state.settings?.profileSetupComplete ?? hadCustomName;
+  if (LEGACY_THEMES[settings.theme]) settings.theme = LEGACY_THEMES[settings.theme];
   if (!VALID_THEMES.has(settings.theme as ThemeId)) settings.theme = "aurea";
   if (!settings.timeZone) settings.timeZone = "auto";
   settings.dayStartHour = Math.max(0, Math.min(23, Number(settings.dayStartHour ?? 7)));
@@ -176,7 +187,7 @@ function normalizeState(input: unknown): AureaState | null {
     }),
     categories: state.categories.map((category) => ({
       ...category,
-      color: CATEGORY_COLOR_MIGRATION[category.color?.toLowerCase?.() ?? ""] ?? category.color,
+      color: migrateLegacyCategoryColor(CATEGORY_COLOR_MIGRATION[category.color?.toLowerCase?.() ?? ""] ?? category.color ?? "", settings.theme),
     })),
     habits: Array.isArray(state.habits)
       ? state.habits.map((habit) => ({
@@ -184,7 +195,7 @@ function normalizeState(input: unknown): AureaState | null {
           frequency: habit.frequency ?? "custom",
           excludedDates: habit.excludedDates ?? [],
           subtasks: habit.subtasks ?? [],
-          color: habit.color ?? "#C9B7F1",
+          color: !habit.color || LEGACY_HABIT_COLORS.has(habit.color.toLowerCase()) ? THEME_META[settings.theme].habitColor : habit.color,
         }))
       : [],
     habitCompletions: state.habitCompletions ?? {},
