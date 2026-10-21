@@ -425,6 +425,17 @@ http://localhost:3000
 
 ---
 
+## Tests
+
+Automated tests cover the core planner logic: sync merging, reminders, recurring tasks and dates, the weekly review, search, project board ordering and theme color migration.
+
+```bash
+npm test          # run once
+npm run test:watch  # re-run on save
+```
+
+Tests live in `tests/` and run with Vitest. `npm run build` runs them first, so a failing test stops a Vercel deploy before it reaches users.
+
 ## Supabase environment variables
 
 Aurea expects:
