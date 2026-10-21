@@ -8,7 +8,7 @@ import type { Task } from "@/lib/aurea/types";
 import { useAurea } from "./aurea-provider";
 import { TaskModal } from "./task-modal";
 
-const CHIP_ICONS: Record<string, string> = { date: "📅", time: "⏰", duration: "⏳", reminder: "🔔", repeat: "↻", category: "●", project: "▱", warning: "!" };
+const CHIP_ICONS: Record<string, string> = { date: "📅", time: "⏰", duration: "⏳", travel: "🚗", reminder: "🔔", repeat: "↻", category: "●", project: "▱", warning: "!" };
 
 /**
  * One-line task entry: "dentist tomorrow 3pm remind 1 day before #health".
@@ -36,6 +36,7 @@ export function QuickAddBar({ defaultDate, defaultProjectId, placeholder }: { de
       dueDate,
       scheduledTime: parsed.scheduledTime,
       durationMinutes: parsed.durationMinutes,
+      travelTimeMinutes: parsed.travelTimeMinutes,
       ...reminderFields(parsed.reminders ?? []),
       categoryId: parsed.categoryId ?? state.categories[0]?.id,
       projectId,

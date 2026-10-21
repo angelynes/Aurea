@@ -11,13 +11,14 @@ export type QuickAddResult = {
   dueDate?: string;
   scheduledTime?: string;
   durationMinutes?: number;
+  travelTimeMinutes?: number;
   reminders?: number[];
   recurrence: Recurrence;
   recurrenceDays?: number[];
   categoryId?: string;
   projectId?: string;
   /** What was understood, for the preview under the input. */
-  chips: { kind: "date" | "time" | "duration" | "reminder" | "repeat" | "category" | "project" | "warning"; label: string }[];
+  chips: { kind: "date" | "time" | "duration" | "travel" | "reminder" | "repeat" | "category" | "project" | "warning"; label: string }[];
 };
 
 const DAY = 24 * 60;
@@ -85,7 +86,8 @@ function formatReminder(minutes: number) {
 }
 
 export function parseQuickAdd(input: string, today: string, categories: Category[], projects: Project[]): QuickAddResult {
-  let text = ` ${input.trim()} `;
+  // Pad punctuation that ends a word ("8am,") so phrases still match; decimals and times like 1.5h or 11:59 stay intact.
+  let text = ` ${input.trim().replace(/([,;!?]|\.(?!\d))(?=\s|$)/g, " $1 ")} `;
   const chips: QuickAddResult["chips"] = [];
   const result: QuickAddResult = { title: "", recurrence: "none", chips };
 
@@ -101,7 +103,8 @@ export function parseQuickAdd(input: string, today: string, categories: Category
   const amount = `(?:at\\s+(?:the\\s+)?start|on\\s+time|\\d+(?:\\.\\d+)?\\s*${UNIT_PATTERN})`;
   const remind = take(new RegExp(`\\sremind(?:\\s+me)?((?:\\s+${amount})(?:\\s*(?:,|and|&)\\s*${amount})*)?(?:\\s+(?:before|early|earlier|ahead))?(?=\\s)`, "i"));
   if (remind) {
-    const parts = remind[1] ? remind[1].split(/\s*(?:,|\band\b|&)\s*/i).map((part) => part.trim()).filter(Boolean) : ["at start"];
+    // "remind before" with no amount means 15 minutes before; plain "remind" means at the start.
+    const parts = remind[1] ? remind[1].split(/\s*(?:,|\band\b|&)\s*/i).map((part) => part.trim()).filter(Boolean) : [/before|early|ahead/i.test(remind[0]) ? "15 min" : "at start"];
     result.reminders = [...new Set(parts.map((part) => {
       const number = /(\d+(?:\.\d+)?)\s*([a-z]+)/i.exec(part);
       return number ? Math.round(Number(number[1]) * unitMinutes(number[2])) : 0;
@@ -111,6 +114,10 @@ export function parseQuickAdd(input: string, today: string, categories: Category
   // Duration: "for 30 min", "for 1.5h", "for 2 hours".
   const duration = take(/\sfor\s+(\d+(?:\.\d+)?)\s*(m|mins?|minutes?|h|hrs?|hours?)(?=\s)/i);
   if (duration) result.durationMinutes = Math.round(Number(duration[1]) * unitMinutes(duration[2]));
+
+  // Travel time: "travel time is 5 minutes", "20 min travel", "travel 15m", "10 min drive".
+  const travel = take(/\s(?:(?:travel(?:\s+time)?|commute|drive|walk)(?:\s+(?:is|of|=|:))?\s+(\d+(?:\.\d+)?)\s*(m|mins?|minutes?|h|hrs?|hours?)|(\d+(?:\.\d+)?)\s*(m|mins?|minutes?|h|hrs?|hours?)\s+(?:of\s+)?(?:travel(?:\s+time)?|commute|drive|walk))(?=\s)/i);
+  if (travel) result.travelTimeMinutes = Math.round(Number(travel[1] ?? travel[3]) * unitMinutes(travel[2] ?? travel[4]));
 
   // Repeats: "every day", "weekdays", "every monday and thursday", "monthly"…
   const everyDays = take(new RegExp(`\\severy\\s+(${WEEKDAY_PATTERN}(?:\\s*(?:,|and|&)\\s*${WEEKDAY_PATTERN})*)(?=\\s)`, "i"));
@@ -211,11 +218,21 @@ export function parseQuickAdd(input: string, today: string, categories: Category
     result.dueDate = result.recurrenceDays.map((day) => upcoming(today, day)).sort()[0];
   }
 
-  result.title = text.replace(/\s+/g, " ").trim().replace(/\s+(?:at|on|by|and|for|in|@)$/i, "").replace(/^(?:at|on)\s+/i, "").trim();
+  result.title = text
+    .replace(/\s+([,;!?.])/g, "$1")
+    .replace(/([,;])(?:\s*[,;])+/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^[,;.\s]+|[,;\s]+$/g, "")
+    .replace(/\s+(?:at|on|by|and|for|in|with|is|@)$/i, "")
+    .replace(/^(?:at|on)\s+/i, "")
+    .replace(/[,;.\s]+$/g, "")
+    .trim();
 
   if (result.dueDate) chips.unshift({ kind: "date", label: formatDate(result.dueDate, today) });
   if (result.scheduledTime) chips.push({ kind: "time", label: formatTime(result.scheduledTime) });
   if (result.durationMinutes) chips.push({ kind: "duration", label: formatDuration(result.durationMinutes) });
+  if (result.travelTimeMinutes) chips.push({ kind: "travel", label: `${formatDuration(result.travelTimeMinutes)} travel` });
   if (result.recurrence !== "none") chips.push({ kind: "repeat", label: result.recurrence === "weekly" && result.recurrenceDays?.length ? `Every ${result.recurrenceDays.map((day) => WEEKDAYS[day].slice(0, 3).replace(/^./, (c) => c.toUpperCase())).join(", ")}` : `Repeats ${result.recurrence}` });
   for (const minutes of result.reminders ?? []) chips.push({ kind: "reminder", label: formatReminder(minutes) });
   if (result.categoryId) chips.push({ kind: "category", label: categories.find((item) => item.id === result.categoryId)!.name });
