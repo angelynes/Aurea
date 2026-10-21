@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Project, ProjectUpdate, Task, TaskStatus } from "@/lib/aurea/types";
 import { dateKey, formatShortDate } from "@/lib/aurea/date";
 import { useAurea } from "./aurea-provider";
+import { QuickAddBar } from "./quick-add-bar";
 import { ProjectModal } from "./project-modal";
 import { TaskModal } from "./task-modal";
 import { AureaLogo } from "@/components/aurea-logo";
@@ -147,6 +148,7 @@ export function ProjectsBoard() {
         <div className="project-backlog-note"><strong>Project tasks can stay undated.</strong><span>Leave Date blank to keep a task in this project only. It will not appear on Today until you give it a date.</span></div>
 
         <div className="mobile-kanban-tabs">{columns.map((column) => <button key={column.status} className={mobileStatus === column.status ? "active" : ""} onClick={() => setMobileStatus(column.status)}>{column.label}<span>{projectTasks.filter((task) => task.status === column.status).length}</span></button>)}</div>
+        <QuickAddBar key={selectedProject.id} defaultProjectId={selectedProject.id} placeholder={`Add to ${selectedProject.name}… e.g. draft outline friday remind 1 day before`} />
         <div className="kanban-board">
           {columns.map((column) => {
             const tasks = projectTasks.filter((task) => task.status === column.status);
