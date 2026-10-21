@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { resolvedTimeZone } from "@/lib/aurea/date";
 import { CATEGORY_COLORS } from "@/lib/aurea/theme";
 import { LegalLinks } from "@/components/legal-page";
+import { APP_VERSION, SUPPORT_EMAIL } from "@/lib/site";
 import { useAurea } from "./aurea-provider";
 import type { Category, AureaSettings, AureaState } from "@/lib/aurea/types";
 import { AureaLogo } from "@/components/aurea-logo";
@@ -128,6 +129,12 @@ export function SettingsPanel() {
     if (answer?.trim().toUpperCase() !== "DELETE") return;
     const result = await deleteAccount();
     alert(result.message);
+  }
+
+  function feedbackLink() {
+    const device = typeof navigator === "undefined" ? "" : navigator.userAgent;
+    const body = `\n\n—\nAurea ${APP_VERSION}\nPage: Settings\nDevice: ${device}`;
+    return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Aurea feedback")}&body=${encodeURIComponent(body)}`;
   }
 
   function exportBackup() {
@@ -257,6 +264,17 @@ export function SettingsPanel() {
         <section className="panel settings-card">
           <div className="settings-card-heading"><div><span className="settings-icon"></span><div><h2>Apple Calendar</h2><p>Apple Calendar needs a different path than Google.</p></div></div></div>
           <div className="settings-fields"><div className="connection-empty"><strong>Web/PWA: .ics import · Native app: direct calendar access</strong><p>The browser version cannot directly request your iPhone&apos;s private Calendar database. Aurea keeps .ics import now; the native iPhone/iPad version will use Apple&apos;s EventKit permission flow for live Apple Calendar access.</p></div><button className="ghost-button" onClick={() => { if (confirm("Remove imported .ics calendar events?")) clearImportedEvents("ics"); }}>Clear .ics events</button></div>
+        </section>
+
+        <section className="panel settings-card">
+          <div className="settings-card-heading"><div><span className="settings-icon">?</span><div><h2>Help & feedback</h2><p>Found a bug or have an idea? We read every message.</p></div></div></div>
+          <div className="settings-fields">
+            <a className="primary-button feedback-button" href={feedbackLink()}>Send feedback</a>
+            <p className="settings-note">Opens an email to {SUPPORT_EMAIL} with your app version and device filled in.</p>
+            <div className="help-links"><a href="/#install">Install on your phone</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms</a></div>
+            <p className="settings-note">Aurea {APP_VERSION}</p>
+            {state.settings.welcomeDismissed && <button type="button" className="text-button" onClick={() => updateSettings({ welcomeDismissed: false })}>Show the getting-started steps again</button>}
+          </div>
         </section>
 
         <section className="panel settings-card wide-card">

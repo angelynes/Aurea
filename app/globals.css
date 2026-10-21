@@ -1163,3 +1163,30 @@ html .modal-backdrop { background:var(--overlay); backdrop-filter:none; }
 .week-notes.week-wide { grid-template-columns: 1fr 1fr; column-gap: 16px; }
 .week-notes.week-wide .panel-heading, .week-notes.week-wide .settings-note { grid-column: 1 / -1; }
 @media (max-width: 860px) { .week-notes.week-wide { grid-template-columns: 1fr; } }
+
+/* Welcome card and help */
+.welcome-card { margin-bottom: 16px; padding: 18px 20px 16px; }
+.welcome-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.welcome-heading h2 { margin: 4px 0 2px; }
+.welcome-heading p { margin: 0; color: var(--text-muted); font-size: 13px; }
+.welcome-close { width: 32px; height: 32px; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted); font-size: 22px; cursor: pointer; }
+.welcome-close:hover { background: var(--hover); color: var(--primary); }
+.welcome-progress { height: 6px; margin: 12px 0 6px; border-radius: 99px; background: var(--very-light); overflow: hidden; }
+.welcome-progress i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+.welcome-steps { margin: 0; padding: 0; list-style: none; display: grid; }
+.welcome-steps li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.welcome-steps li:last-child { border-bottom: 0; }
+.welcome-steps strong { display: block; font-size: 14px; color: var(--ink); }
+.welcome-steps small { color: var(--text-muted); font-size: 12px; }
+.welcome-steps li.done strong { color: var(--text-muted); text-decoration: line-through; }
+.welcome-steps .soft-button { white-space: nowrap; padding: 8px 12px; font-size: 13px; }
+.welcome-check { display: grid; place-items: center; width: 24px; height: 24px; border: 1.5px solid var(--line-strong); border-radius: 50%; color: var(--on-primary); font-size: 13px; font-weight: 700; }
+.welcome-steps li.done .welcome-check { background: var(--accent); border-color: var(--accent); }
+.welcome-finish { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; color: var(--text-soft); font-size: 14px; }
+.feedback-button { display: inline-flex; align-items: center; justify-content: center; width: fit-content; }
+.help-links { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; }
+.help-links a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 600px) {
+  .welcome-steps li { grid-template-columns: 26px minmax(0, 1fr); }
+  .welcome-steps li > .soft-button { grid-column: 2; justify-self: start; }
+}

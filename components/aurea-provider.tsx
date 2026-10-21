@@ -153,6 +153,8 @@ function normalizeState(input: unknown): AureaState | null {
   const hadCustomName = Boolean(incomingName) && !["darren", "profile"].includes(incomingName.toLowerCase());
   if (!settings.displayName || settings.displayName.trim().toLowerCase() === "darren") settings.displayName = "Profile";
   settings.profileSetupComplete = state.settings?.profileSetupComplete ?? hadCustomName;
+  // Accounts from before the welcome card existed (with tasks already) never see it.
+  if (state.settings?.welcomeDismissed === undefined) settings.welcomeDismissed = state.tasks.length > 0;
   // Aurea has a single look; older saves may name a retired theme.
   settings.theme = "aurea";
   if (!settings.timeZone) settings.timeZone = "auto";

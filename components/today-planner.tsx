@@ -20,6 +20,7 @@ import {
 } from "@/lib/aurea/date";
 import type { Habit, Task } from "@/lib/aurea/types";
 import { useAurea } from "./aurea-provider";
+import { WelcomeCard } from "./welcome-card";
 import { TaskModal } from "./task-modal";
 import { HabitModal } from "./habit-modal";
 import { AureaLogo } from "@/components/aurea-logo";
@@ -306,6 +307,8 @@ export function TodayPlanner() {
         <div><p className="mobile-brand"><AureaLogo size={24} />Aurea</p><span className="eyebrow">TODAY</span><h1>{formatLongDate(selectedDate)}</h1><p className="subtitle day-summary">{visibleTasks.length} {visibleTasks.length === 1 ? "task" : "tasks"} · {dayHabits.length} {dayHabits.length === 1 ? "routine" : "routines"}</p></div>
         <div className="header-actions">{unfinished.length > 0 && <button className="soft-button desktop-only" onClick={openReview}>Evening review · {unfinished.length}</button>}<button className="primary-button" onClick={() => setTaskModal({ open: true })}>＋ Add task</button></div>
       </header>
+
+      <WelcomeCard onAddTask={() => setTaskModal({ open: true })} />
 
       <section className="progress-compact">
         <div className="compact-progress-copy"><strong>Today&apos;s progress</strong><span>{progressDone} of {progressTotal} complete</span></div>

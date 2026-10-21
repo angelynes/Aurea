@@ -20,6 +20,11 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
   const [profileName, setProfileName] = useState("");
   const initials = state.settings.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "P";
   const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    const open = () => setSearchOpen(true);
+    window.addEventListener("aurea:open-search", open);
+    return () => window.removeEventListener("aurea:open-search", open);
+  }, []);
   const showProfileSetup = hydrated && !state.settings.profileSetupComplete;
 
   useEffect(() => {

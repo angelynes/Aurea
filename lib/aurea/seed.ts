@@ -22,6 +22,7 @@ export function createSeedState(): AureaState {
     settings: {
       displayName: "Profile",
       profileSetupComplete: false,
+      welcomeDismissed: false,
       theme: "aurea",
       eveningReviewTime: "20:30",
       notificationsEnabled: false,

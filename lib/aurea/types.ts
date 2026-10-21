@@ -108,6 +108,8 @@ export type AureaSettings = {
   displayName: string;
   profileImage?: string;
   profileSetupComplete: boolean;
+  /** The welcome card on Today was dismissed (or the account already had tasks when it was added). */
+  welcomeDismissed?: boolean;
   theme: ThemeId;
   eveningReviewTime: string;
   notificationsEnabled: boolean;
