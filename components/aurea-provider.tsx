@@ -61,6 +61,7 @@ type AureaContextValue = {
   importExternalEvents: (events: ExternalCalendarEvent[]) => void;
   clearImportedEvents: (source?: ExternalCalendarEvent["source"]) => void;
   updateSettings: (patch: Partial<AureaSettings>) => void;
+  saveWeeklyReview: (weekStart: string, patch: { wins?: string; focus?: string }) => void;
   importState: (next: AureaState) => void;
   resetState: () => void;
   cloudConfigured: boolean;
@@ -673,6 +674,10 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   }, [mutate]);
 
   const clearImportedEvents = useCallback((source?: ExternalCalendarEvent["source"]) => { mutate((current) => ({ ...current, externalEvents: source ? current.externalEvents.filter((event) => event.source !== source) : [] })); }, [mutate]);
+  const saveWeeklyReview = useCallback((weekStart: string, patch: { wins?: string; focus?: string }) => {
+    mutate((current) => ({ ...current, weeklyReviews: { ...(current.weeklyReviews ?? {}), [weekStart]: { ...(current.weeklyReviews?.[weekStart] ?? {}), ...patch, updatedAt: new Date().toISOString() } } }));
+  }, [mutate]);
+
   const updateSettings = useCallback((patch: Partial<AureaSettings>) => { mutate((current) => ({ ...current, settings: { ...current.settings, ...patch } })); }, [mutate]);
   const importState = useCallback((next: AureaState) => { const normalized = normalizeState(next); if (normalized) { const stamped = stamp(normalized); dirtyRef.current = true; stateRef.current = stamped; setState(stamped); } }, []);
   const resetState = useCallback(() => { const next = createSeedState(); dirtyRef.current = true; stateRef.current = next; setState(next); }, []);
@@ -852,7 +857,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
-    updateSettings, importState, resetState, cloudConfigured, cloudStatus, cloudEmail: session?.user.email ?? null,
+    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, cloudEmail: session?.user.email ?? null,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupport: pushSupportState, pushEnabled, enablePush, disablePush,
@@ -860,7 +865,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
-    updateSettings, importState, resetState, cloudConfigured, cloudStatus, session,
+    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, session,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupportState, pushEnabled, enablePush, disablePush,

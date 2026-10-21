@@ -6,15 +6,16 @@ import { useAurea } from "./aurea-provider";
 import { AureaLogo } from "@/components/aurea-logo";
 import { LegalLinks } from "@/components/legal-page";
 import { SearchPalette } from "@/components/search-palette";
-import { CalendarIcon, ProjectsIcon, SearchIcon, TodayIcon } from "@/components/nav-icons";
+import { CalendarIcon, ProjectsIcon, ReviewIcon, SearchIcon, TodayIcon } from "@/components/nav-icons";
 
 const items = [
   { key: "today", label: "Today", href: "/today", Icon: TodayIcon },
   { key: "projects", label: "Projects", href: "/projects", Icon: ProjectsIcon },
   { key: "calendar", label: "Calendar", href: "/calendar", Icon: CalendarIcon },
+  { key: "review", label: "Week", href: "/review", Icon: ReviewIcon },
 ] as const;
 
-export function AureaShell({ active, children }: { active: "today" | "calendar" | "projects" | "settings"; children: React.ReactNode }) {
+export function AureaShell({ active, children }: { active: "today" | "calendar" | "projects" | "review" | "settings"; children: React.ReactNode }) {
   const { state, hydrated, updateSettings } = useAurea();
   const [profileName, setProfileName] = useState("");
   const initials = state.settings.displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "P";

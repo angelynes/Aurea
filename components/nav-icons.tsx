@@ -16,3 +16,7 @@ export function CalendarIcon() {
 export function SearchIcon() {
   return <svg {...common}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></svg>;
 }
+
+export function ReviewIcon() {
+  return <svg {...common}><path d="M4 19.5V9M10 19.5V5M16 19.5v-7M21 19.5H3" /></svg>;
+}
