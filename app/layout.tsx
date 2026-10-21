@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Newsreader } from "next/font/google";
-import "./globals.css";
+// Generated from globals.css with automatic dark mode (scripts/dark-css.mjs).
+import "./globals.generated.css";
 import { AureaProvider } from "@/components/aurea-provider";
 import { ReminderWatcher } from "@/components/reminder-watcher";
 import { PwaRegister } from "@/components/pwa-register";
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FBF8F3",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FBF8F3" },
+    { media: "(prefers-color-scheme: dark)", color: "#17151C" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
