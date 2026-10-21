@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAurea } from "./aurea-provider";
 import { AureaLogo } from "@/components/aurea-logo";
+import { LegalLinks } from "@/components/legal-page";
 import { CalendarIcon, ProjectsIcon, TodayIcon } from "@/components/nav-icons";
 
 const items = [
@@ -46,7 +47,7 @@ export function AureaShell({ active, children }: { active: "today" | "calendar" 
       <main className="main-content">{children}</main>
       <nav className="mobile-nav" aria-label="Mobile navigation">{items.map((item) => <Link key={item.key} className={active === item.key ? "active" : ""} href={item.href}><span><item.Icon /></span><small>{item.label}</small></Link>)}</nav>
 
-      {showProfileSetup && <div className="modal-backdrop" role="presentation"><form className="modal-card profile-setup-card onboarding-expanded" onSubmit={finishProfileSetup} role="dialog" aria-modal="true" aria-labelledby="profile-setup-title"><div className="profile-setup-mark">Aurea</div><div className="modal-heading profile-setup-heading"><div><span className="eyebrow">WELCOME</span><h2 id="profile-setup-title">Make Aurea yours</h2><p className="subtitle">What should we call you? You can change this later in Settings.</p></div></div><label className="field"><span>Name</span><input autoFocus value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Profile" maxLength={60} /></label><div className="modal-actions profile-setup-actions"><button className="ghost-button" type="button" onClick={() => { setProfileName(""); updateSettings({ displayName: "Profile", profileSetupComplete: true }); }}>Use Profile</button><button className="primary-button" type="submit">Continue</button></div></form></div>}
+      {showProfileSetup && <div className="modal-backdrop" role="presentation"><form className="modal-card profile-setup-card onboarding-expanded" onSubmit={finishProfileSetup} role="dialog" aria-modal="true" aria-labelledby="profile-setup-title"><div className="profile-setup-mark">Aurea</div><div className="modal-heading profile-setup-heading"><div><span className="eyebrow">WELCOME</span><h2 id="profile-setup-title">Make Aurea yours</h2><p className="subtitle">What should we call you? You can change this later in Settings.</p></div></div><label className="field"><span>Name</span><input autoFocus value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Profile" maxLength={60} /></label><div className="modal-actions profile-setup-actions"><button className="ghost-button" type="button" onClick={() => { setProfileName(""); updateSettings({ displayName: "Profile", profileSetupComplete: true }); }}>Use Profile</button><button className="primary-button" type="submit">Continue</button></div><LegalLinks /></form></div>}
     </div>
   );
 }

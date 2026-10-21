@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { resolvedTimeZone } from "@/lib/aurea/date";
 import { CATEGORY_COLORS } from "@/lib/aurea/theme";
+import { LegalLinks } from "@/components/legal-page";
 import { useAurea } from "./aurea-provider";
 import type { Category, AureaSettings, AureaState } from "@/lib/aurea/types";
 import { AureaLogo } from "@/components/aurea-logo";
@@ -62,6 +63,7 @@ export function SettingsPanel() {
     reorderCategory,
     importState,
     resetState,
+    deleteAccount,
     clearImportedEvents,
     cloudConfigured,
     cloudStatus,
@@ -120,6 +122,13 @@ export function SettingsPanel() {
         : pushSupport === "unsupported"
           ? "This browser does not support push reminders."
           : pushEnabled ? "On for this device" : "Off for this device";
+
+  async function confirmDeleteAccount() {
+    const answer = window.prompt("This permanently deletes your Aurea account, your planner on every device, its backups and your reminder settings. It cannot be undone.\n\nTip: export a backup first if you want a copy.\n\nType DELETE to confirm.");
+    if (answer?.trim().toUpperCase() !== "DELETE") return;
+    const result = await deleteAccount();
+    alert(result.message);
+  }
 
   function exportBackup() {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -233,7 +242,7 @@ export function SettingsPanel() {
               <form className="cloud-form" onSubmit={connectCloud}><label className="field"><span>Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></label><button className="primary-button" type="submit">Send sign-in email</button></form>
               <form className="otp-form" onSubmit={verifyCode}><label className="field"><span>Email code</span><input inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="Enter the code from your email" /></label><button className="soft-button" type="submit" disabled={!email.trim() || !otp.trim()}>Verify code</button></form>
               <div className="social-login-divider"><span>or</span></div><div className="social-login-buttons"><button className="oauth-button" type="button" onClick={async () => setCloudMessage((await signInWithProvider("google")).message)}>G&nbsp; Continue with Google</button></div>
-              <p className="settings-note">Using the email code is the most reliable sign-in method when Aurea is installed to your iPhone Home Screen because it does not need to jump back from Safari.</p>{cloudMessage && <p className="settings-note auth-message">{cloudMessage}</p>}
+              <p className="settings-note">By signing in, you agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</p><p className="settings-note">Using the email code is the most reliable sign-in method when Aurea is installed to your iPhone Home Screen because it does not need to jump back from Safari.</p>{cloudMessage && <p className="settings-note auth-message">{cloudMessage}</p>}
             </> : <><div className="connection-empty"><strong>Cloud sync is ready, but not connected yet.</strong><p>Add the Supabase environment variables in Vercel, then sign in here.</p></div><span className="status-pill local">Local only</span></>}
           </div>
         </section>
@@ -250,9 +259,10 @@ export function SettingsPanel() {
 
         <section className="panel settings-card wide-card">
           <div className="settings-card-heading"><div><span className="settings-icon">⇄</span><div><h2>Data & backup</h2><p>Your local data is stored in this browser unless cloud sync is connected.</p></div></div></div>
-          <div className="data-actions"><button className="soft-button" onClick={exportBackup}>Export Aurea backup</button><button className="soft-button" onClick={() => importRef.current?.click()}>Restore backup</button><input ref={importRef} hidden type="file" accept="application/json,.json" onChange={importBackup} /><button className="danger-outline" onClick={() => { if (confirm("Reset Aurea to a blank planner? This removes your tasks, projects, routines, and imported calendar events.")) resetState(); }}>Reset Aurea</button></div>
+          <div className="data-actions"><button className="soft-button" onClick={exportBackup}>Export Aurea backup</button><button className="soft-button" onClick={() => importRef.current?.click()}>Restore backup</button><input ref={importRef} hidden type="file" accept="application/json,.json" onChange={importBackup} /><button className="danger-outline" onClick={() => { if (confirm("Reset Aurea to a blank planner? This removes your tasks, projects, routines, and imported calendar events.")) resetState(); }}>Reset Aurea</button>{cloudEmail && <button className="danger-outline" onClick={confirmDeleteAccount}>Delete my account</button>}</div>{cloudEmail && <p className="settings-note">Deleting your account removes it from Aurea's servers and this device. Export a backup first if you want a copy.</p>}
         </section>
       </div>
+      <LegalLinks />
     </>
   );
 }

@@ -5,6 +5,7 @@ import type { Provider, Session, SupabaseClient } from "@supabase/supabase-js";
 import { createClient, hasSupabaseConfig } from "@/lib/supabase/client";
 import { createSeedState } from "@/lib/aurea/seed";
 import { toAureaCategoryColor, toAureaHabitColor } from "@/lib/aurea/theme";
+import { deepEqual, merge3 } from "@/lib/aurea/merge";
 import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromPush, type PushSupport } from "@/lib/push";
 import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
@@ -19,6 +20,8 @@ import type {
 } from "@/lib/aurea/types";
 
 const STORAGE_KEY = "aurea-planner-state-v2";
+/** Last planner copy this device and the cloud agreed on, used to merge changes from other devices. */
+const SYNC_BASE_KEY = "aurea-sync-base-v1";
 const GOOGLE_CALENDAR_TOKEN_KEY = "aurea-google-calendar-token";
 const GOOGLE_OAUTH_INTENT_KEY = "aurea-google-oauth-intent";
 // The app was called NOVA before; carry existing device data over to the new keys.
@@ -67,6 +70,7 @@ type AureaContextValue = {
   verifyEmailOtp: (email: string, token: string) => Promise<Result>;
   signInWithProvider: (provider: "google") => Promise<Result>;
   signOutCloud: () => Promise<void>;
+  deleteAccount: () => Promise<Result>;
   syncNow: () => Promise<void>;
   googleCalendarConnected: boolean;
   connectGoogleCalendar: () => Promise<Result>;
@@ -208,9 +212,13 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   const [pushSupportState, setPushSupportState] = useState<PushSupport>("unsupported");
   const sessionRef = useRef<Session | null>(null);
   const supabaseRef = useRef<SupabaseClient | null>(null);
-  const cloudLoadingRef = useRef(false);
   const cloudReadyRef = useRef(false);
-  const lastRemoteUpdatedAtRef = useRef<string | null>(null);
+  const cloudVersionRef = useRef<number | null>(null);
+  const cloudBaseRef = useRef<AureaState | null>(null);
+  const dirtyRef = useRef(false);
+  const syncingRef = useRef(false);
+  const pendingSyncRef = useRef<"pull" | "push" | null>(null);
+  const runSyncRef = useRef<(mode: "pull" | "push") => Promise<void>>(async () => undefined);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<AureaState>(state);
 
@@ -242,62 +250,107 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state, hydrated]);
 
-  const loadCloud = useCallback(async (client: SupabaseClient, activeSession: Session) => {
-    if (cloudLoadingRef.current) return;
-    const loadStartedAt = stateRef.current.lastUpdatedAt;
-    cloudLoadingRef.current = true;
-    setCloudStatus("connecting");
-    const { data, error } = await client.from("app_state").select("data, updated_at").eq("user_id", activeSession.user.id).maybeSingle();
-
-    if (error) {
-      cloudLoadingRef.current = false;
-      setCloudStatus("error");
-      return;
+  const rememberCloud = useCallback((userId: string | null, version: number | null, base: AureaState | null) => {
+    cloudVersionRef.current = version;
+    cloudBaseRef.current = base;
+    try {
+      if (userId && base && version != null) window.localStorage.setItem(SYNC_BASE_KEY, JSON.stringify({ userId, version, base }));
+      else window.localStorage.removeItem(SYNC_BASE_KEY);
+    } catch {
+      // Storage full: merging still works for this session.
     }
+  }, []);
 
-    const localSnapshot = stateRef.current;
-    if (data?.data) {
-      const remote = normalizeState(data.data);
-      if (remote) {
-        const remoteUpdatedAt = typeof data.updated_at === "string" ? data.updated_at : null;
-        if (!cloudReadyRef.current) {
-          const changedWhileLoading = localSnapshot.lastUpdatedAt !== loadStartedAt;
-          if (changedWhileLoading) {
-            const updatedAt = new Date().toISOString();
-            const { error: saveError } = await client.from("app_state").upsert({ user_id: activeSession.user.id, data: localSnapshot, updated_at: updatedAt });
-            if (saveError) { cloudLoadingRef.current = false; setCloudStatus("error"); return; }
-            lastRemoteUpdatedAtRef.current = updatedAt;
-          } else {
-            stateRef.current = remote;
-            setState(remote);
-            lastRemoteUpdatedAtRef.current = remoteUpdatedAt;
-          }
-        } else if (remoteUpdatedAt && remoteUpdatedAt !== lastRemoteUpdatedAtRef.current) {
-          const remoteStamp = Date.parse(remote.lastUpdatedAt || "");
-          const localStamp = Date.parse(localSnapshot.lastUpdatedAt || "");
-          if (Number.isFinite(remoteStamp) && (!Number.isFinite(localStamp) || remoteStamp > localStamp)) {
-            stateRef.current = remote;
-            setState(remote);
-            lastRemoteUpdatedAtRef.current = remoteUpdatedAt;
-          } else {
-            const updatedAt = new Date().toISOString();
-            const { error: saveError } = await client.from("app_state").upsert({ user_id: activeSession.user.id, data: localSnapshot, updated_at: updatedAt });
-            if (saveError) { cloudLoadingRef.current = false; setCloudStatus("error"); return; }
-            lastRemoteUpdatedAtRef.current = updatedAt;
-          }
+  /**
+   * Fetch the cloud copy and fold in this device's unsaved changes (three-way merge against
+   * the last copy both agreed on). Returns true when the merged result still needs saving.
+   */
+  const pullAndMerge = useCallback(async (client: SupabaseClient, userId: string): Promise<boolean> => {
+    const startSnapshot = stateRef.current;
+    const { data, error } = await client.from("app_state").select("data, version").eq("user_id", userId).maybeSingle();
+    if (error) throw error;
+    if (!data?.data) { rememberCloud(userId, null, null); return true; }
+    const remote = normalizeState(data.data);
+    if (!remote) return false;
+    // First sync on this device: the cloud copy wins, plus anything edited while it loaded.
+    const base = cloudBaseRef.current ?? startSnapshot;
+    const merged = normalizeState(merge3(base, stateRef.current, remote)) ?? remote;
+    const needsSave = !deepEqual(merged, remote);
+    rememberCloud(userId, Number(data.version ?? 0), remote);
+    stateRef.current = merged;
+    setState(merged);
+    dirtyRef.current = needsSave;
+    return needsSave;
+  }, [rememberCloud]);
+
+  /** Save only if nobody else saved since the version we last saw; otherwise merge and retry. */
+  const pushToCloud = useCallback(async (client: SupabaseClient, userId: string) => {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const snapshot = stateRef.current;
+      const version = cloudVersionRef.current;
+      const updatedAt = new Date().toISOString();
+      if (version == null) {
+        const { data, error } = await client.from("app_state").insert({ user_id: userId, data: snapshot, updated_at: updatedAt }).select("version").single();
+        if (!error && data) {
+          rememberCloud(userId, Number(data.version ?? 0), snapshot);
+          if (stateRef.current === snapshot) dirtyRef.current = false;
+          return;
+        }
+        if (error && error.code !== "23505") throw error;
+      } else {
+        const { data, error } = await client.from("app_state").update({ data: snapshot, updated_at: updatedAt }).eq("user_id", userId).eq("version", version).select("version");
+        if (error) throw error;
+        if (data?.length) {
+          rememberCloud(userId, Number(data[0].version ?? 0), snapshot);
+          if (stateRef.current === snapshot) dirtyRef.current = false;
+          return;
         }
       }
-    } else {
-      const updatedAt = new Date().toISOString();
-      const { error: saveError } = await client.from("app_state").upsert({ user_id: activeSession.user.id, data: localSnapshot, updated_at: updatedAt });
-      if (saveError) { cloudLoadingRef.current = false; setCloudStatus("error"); return; }
-      lastRemoteUpdatedAtRef.current = updatedAt;
+      // Another device saved first: merge its changes in and try again.
+      if (!(await pullAndMerge(client, userId))) return;
     }
+    throw new Error("Could not save after several attempts.");
+  }, [pullAndMerge, rememberCloud]);
 
-    cloudReadyRef.current = true;
-    cloudLoadingRef.current = false;
-    setCloudStatus("synced");
-  }, []);
+  /** One sync at a time; requests made meanwhile run right after. "pull" also saves when needed. */
+  const runSync = useCallback(async (mode: "pull" | "push") => {
+    const client = supabaseRef.current;
+    const userId = sessionRef.current?.user.id;
+    if (!client || !userId) return;
+    if (syncingRef.current) {
+      pendingSyncRef.current = pendingSyncRef.current === "pull" || mode === "pull" ? "pull" : "push";
+      return;
+    }
+    syncingRef.current = true;
+    setCloudStatus("connecting");
+    try {
+      if (!cloudReadyRef.current && !cloudBaseRef.current) {
+        try {
+          const saved = JSON.parse(window.localStorage.getItem(SYNC_BASE_KEY) ?? "null");
+          if (saved?.userId === userId && saved.base) { cloudBaseRef.current = normalizeState(saved.base); cloudVersionRef.current = Number(saved.version); }
+        } catch {
+          // No usable saved base: the first pull treats the cloud copy as the starting point.
+        }
+      }
+      if (mode === "pull" || !cloudReadyRef.current) {
+        const needsSave = await pullAndMerge(client, userId);
+        cloudReadyRef.current = true;
+        if (needsSave) await pushToCloud(client, userId);
+      } else if (dirtyRef.current) {
+        await pushToCloud(client, userId);
+      }
+      setCloudStatus("synced");
+    } catch {
+      setCloudStatus("error");
+    } finally {
+      syncingRef.current = false;
+      const pending = pendingSyncRef.current;
+      pendingSyncRef.current = null;
+      if (pending) void runSyncRef.current(pending);
+    }
+  }, [pullAndMerge, pushToCloud]);
+
+  useEffect(() => { runSyncRef.current = runSync; }, [runSync]);
 
   const captureProviderToken = useCallback((nextSession: Session | null) => {
     if (!nextSession?.provider_token || typeof window === "undefined") return;
@@ -319,46 +372,52 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       sessionRef.current = data.session;
       captureProviderToken(data.session);
-      if (data.session) loadCloud(client, data.session);
+      if (data.session) void runSyncRef.current("pull");
     });
 
     const { data: subscription } = client.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       sessionRef.current = nextSession;
       captureProviderToken(nextSession);
-      if (nextSession) window.setTimeout(() => loadCloud(client, nextSession), 0);
+      if (nextSession) window.setTimeout(() => void runSyncRef.current("pull"), 0);
       else {
         cloudReadyRef.current = false;
-        lastRemoteUpdatedAtRef.current = null;
+        cloudVersionRef.current = null;
+        cloudBaseRef.current = null;
         setCloudStatus("local");
       }
     });
 
-    const onFocus = () => { if (sessionRef.current) loadCloud(client, sessionRef.current); };
-    window.addEventListener("focus", onFocus);
+    // Pick up other devices' changes when Aurea comes back into view, and every 30 seconds while open.
+    const onVisible = () => { if (sessionRef.current && document.visibilityState === "visible") void runSyncRef.current("pull"); };
+    const checkVersion = async () => {
+      const userId = sessionRef.current?.user.id;
+      if (!userId || document.visibilityState !== "visible" || syncingRef.current || !cloudReadyRef.current) return;
+      const { data } = await (client as SupabaseClient).from("app_state").select("version").eq("user_id", userId).maybeSingle();
+      if (data && Number(data.version) !== cloudVersionRef.current) void runSyncRef.current("pull");
+    };
+    const poll = window.setInterval(checkVersion, 30_000);
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       subscription.subscription.unsubscribe();
-      window.removeEventListener("focus", onFocus);
+      window.clearInterval(poll);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [hydrated, cloudConfigured, captureProviderToken, loadCloud]);
+  }, [hydrated, cloudConfigured, captureProviderToken]);
 
   useEffect(() => {
-    if (!hydrated || !session || !supabaseRef.current || cloudLoadingRef.current || !cloudReadyRef.current) return;
+    if (!hydrated || !session || !cloudReadyRef.current || !dirtyRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setCloudStatus("connecting");
-    saveTimerRef.current = setTimeout(async () => {
-      const client = supabaseRef.current;
-      if (!client || !session) return;
-      const updatedAt = new Date().toISOString();
-      const { error } = await client.from("app_state").upsert({ user_id: session.user.id, data: state, updated_at: updatedAt });
-      if (!error) lastRemoteUpdatedAtRef.current = updatedAt;
-      setCloudStatus(error ? "error" : "synced");
-    }, 350);
+    saveTimerRef.current = setTimeout(() => { void runSyncRef.current("push"); }, 350);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [state, session, hydrated]);
 
   const mutate = useCallback((recipe: (current: AureaState) => AureaState) => {
     const next = stamp(placeProjectTasksOnStatusChange(stateRef.current, recipe(stateRef.current)));
+    dirtyRef.current = true;
     stateRef.current = next;
     setState(next);
   }, []);
@@ -615,8 +674,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
 
   const clearImportedEvents = useCallback((source?: ExternalCalendarEvent["source"]) => { mutate((current) => ({ ...current, externalEvents: source ? current.externalEvents.filter((event) => event.source !== source) : [] })); }, [mutate]);
   const updateSettings = useCallback((patch: Partial<AureaSettings>) => { mutate((current) => ({ ...current, settings: { ...current.settings, ...patch } })); }, [mutate]);
-  const importState = useCallback((next: AureaState) => { const normalized = normalizeState(next); if (normalized) { const stamped = stamp(normalized); stateRef.current = stamped; setState(stamped); } }, []);
-  const resetState = useCallback(() => { const next = createSeedState(); stateRef.current = next; setState(next); }, []);
+  const importState = useCallback((next: AureaState) => { const normalized = normalizeState(next); if (normalized) { const stamped = stamp(normalized); dirtyRef.current = true; stateRef.current = stamped; setState(stamped); } }, []);
+  const resetState = useCallback(() => { const next = createSeedState(); dirtyRef.current = true; stateRef.current = next; setState(next); }, []);
 
   const sendMagicLink = useCallback(async (email: string) => {
     const client = supabaseRef.current ?? createClient();
@@ -637,10 +696,10 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     if (data.session) {
       setSession(data.session);
       sessionRef.current = data.session;
-      await loadCloud(client, data.session);
+      await runSyncRef.current("pull");
     }
     return { ok: true, message: "Signed in. This device will stay signed in." };
-  }, [loadCloud]);
+  }, []);
 
   const signInWithProvider = useCallback(async (provider: "google") => {
     const client = supabaseRef.current ?? createClient();
@@ -658,21 +717,38 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     sessionRef.current = null;
     cloudReadyRef.current = false;
-    lastRemoteUpdatedAtRef.current = null;
+    rememberCloud(null, null, null);
     window.localStorage.removeItem(GOOGLE_CALENDAR_TOKEN_KEY);
     setGoogleCalendarConnected(false);
     setCloudStatus("local");
-  }, []);
+  }, [rememberCloud]);
 
-  const syncNow = useCallback(async () => {
+  const deleteAccount = useCallback(async (): Promise<Result> => {
     const client = supabaseRef.current;
-    if (!client || !session) return;
-    setCloudStatus("connecting");
-    const updatedAt = new Date().toISOString();
-    const { error } = await client.from("app_state").upsert({ user_id: session.user.id, data: stateRef.current, updated_at: updatedAt });
-    if (!error) { lastRemoteUpdatedAtRef.current = updatedAt; cloudReadyRef.current = true; }
-    setCloudStatus(error ? "error" : "synced");
-  }, [session]);
+    const token = sessionRef.current?.access_token;
+    if (!client || !token) return { ok: false, message: "Sign in first to delete your account." };
+    await unsubscribeFromPush(client).catch(() => undefined);
+    const response = await fetch("/api/account/delete", { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+    const body = await response?.json().catch(() => null) as { error?: string } | null;
+    if (!response?.ok) return { ok: false, message: body?.error ?? "Could not delete your account. Check your connection and try again." };
+    // The account is gone on the server; clear everything this device kept too.
+    await client.auth.signOut({ scope: "local" }).catch(() => undefined);
+    setSession(null);
+    sessionRef.current = null;
+    cloudReadyRef.current = false;
+    rememberCloud(null, null, null);
+    setPushEnabled(false);
+    [STORAGE_KEY, GOOGLE_CALENDAR_TOKEN_KEY, GOOGLE_OAUTH_INTENT_KEY].forEach((key) => window.localStorage.removeItem(key));
+    setGoogleCalendarConnected(false);
+    const fresh = createSeedState();
+    dirtyRef.current = false;
+    stateRef.current = fresh;
+    setState(fresh);
+    setCloudStatus("local");
+    return { ok: true, message: "Your account and planner data have been deleted." };
+  }, [rememberCloud]);
+
+  const syncNow = useCallback(async () => { await runSyncRef.current("pull"); }, []);
 
   const connectGoogleCalendar = useCallback(async () => {
     const client = supabaseRef.current ?? createClient();
@@ -777,7 +853,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
     updateSettings, importState, resetState, cloudConfigured, cloudStatus, cloudEmail: session?.user.email ?? null,
-    sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, syncNow,
+    sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupport: pushSupportState, pushEnabled, enablePush, disablePush,
   }), [
@@ -785,7 +861,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
     updateSettings, importState, resetState, cloudConfigured, cloudStatus, session,
-    sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, syncNow,
+    sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupportState, pushEnabled, enablePush, disablePush,
   ]);
