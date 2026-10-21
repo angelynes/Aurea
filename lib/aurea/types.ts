@@ -1,6 +1,7 @@
 export type TaskStatus = "todo" | "in_progress" | "completed";
 export type Recurrence = "none" | "daily" | "weekdays" | "weekends" | "weekly" | "monthly" | "yearly";
-export type ThemeId = "aurea" | "sage" | "clay" | "tide" | "rose";
+/** Aurea has a single look; kept so saved settings stay readable. */
+export type ThemeId = "aurea";
 
 export type Category = {
   id: string;

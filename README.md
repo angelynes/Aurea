@@ -190,29 +190,13 @@ Users can:
 
 ---
 
-## Themes
+## Look and feel
 
-Aurea currently includes four account-persistent themes:
+Aurea has one look, taken from its logo: warm cream surfaces, a beige sidebar, deep plum (`#3B3550`) and gold (`#D9A441`), Newsreader headings, and flat cards with thin borders. There is no theme picker, which keeps the app simple.
 
-1. **Lavender**
-   - soft lavender / purple palette
-   - original Aurea visual identity
+Color variables live at the end of `app/globals.css`; built-in category and routine colors are in `lib/aurea/theme.ts`. Accounts from older versions that chose another theme are moved to the Aurea look automatically, and their built-in category colors switch to the matching Aurea colors (custom colors are kept).
 
-2. **Minimal**
-   - neutral, understated, gender-neutral palette
-
-3. **Blush**
-   - soft baby-pink pastel palette
-
-4. **Aqua**
-   - pastel turquoise / blue palette
-
-Theme choice is saved to the user's account and remains active until changed.
-
-Onboarding asks for:
-
-- display name
-- preferred theme
+Onboarding asks for a display name.
 
 ---
 
@@ -373,7 +357,7 @@ The selected time zone is used for:
 - The Today timeline can extend past midnight into the following calendar day. For example, Monday can be configured to show **12 AM Monday through 4 AM Tuesday**. Early Tuesday scheduled items then appear at the bottom of Monday's extended schedule as well as in Tuesday's own view.
 - Timeline hour labels use `+1` for next-day hours.
 - Scheduled tasks with overnight or multi-day durations auto-complete only after their true end date/time. Habits/routines still never auto-complete.
-- Category suggestions use a lighter pastel palette across every theme. Known old Aurea palette colors migrate automatically; custom colors are preserved.
+- Category suggestions use a lighter pastel palette. Known old Aurea palette colors migrate automatically; custom colors are preserved.
 - Profile photos use a stricter center crop and circular mask in both Settings and the sidebar.
 
 ## Current completion behavior

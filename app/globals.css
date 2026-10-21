@@ -771,16 +771,7 @@ blockquote { margin: 0; max-width: 440px; font-family: var(--font-serif), Georgi
 .profile-picture-setting small { color:#968e9d; font-size:9px; }
 .profile-picture-setting .inline-actions { margin-top:2px; }
 
-.theme-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.theme-card { min-height:94px; display:flex; flex-direction:column; align-items:flex-start; gap:5px; padding:11px; border:1px solid var(--line); border-radius:14px; background:white; cursor:pointer; text-align:left; }
-.theme-card.active { border-color:var(--secondary); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent); }
-.theme-card strong { color:var(--primary); font-size:11px; }
-.theme-card small { color:#968d9c; font-size:8px; line-height:1.35; }
-.theme-swatches { display:flex; gap:4px; }
-.theme-swatches i { width:19px; height:19px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(0,0,0,.04); }
-.onboarding-theme-picker { display:grid; gap:7px; margin-top:10px; }
 .field-label { font-size:10px; color:#776d82; font-weight:700; }
-.onboarding-themes { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .onboarding-expanded { width:min(620px,94vw); }
 
 .palette-swatches { display:flex; flex-wrap:wrap; gap:4px; }
@@ -816,7 +807,6 @@ blockquote { margin: 0; max-width: 440px; font-family: var(--font-serif), Georgi
   .timeline-positioned.habit-event .event-right-meta { grid-column:2; align-items:flex-start; }
 }
 @media (max-width:560px) {
-  .theme-grid, .onboarding-themes { grid-template-columns:1fr 1fr; }
   .project-update-composer { grid-template-columns:1fr; }
   .project-update-composer .soft-button { justify-self:end; }
   .review-bulk-actions { display:grid; }
@@ -896,8 +886,7 @@ blockquote { margin: 0; max-width: 440px; font-family: var(--font-serif), Georgi
 .reminder-hint { color: #9b93a8; font-size: 11px; }
 
 /* ============================================================
-   Aurea design system — flat, calm surfaces shared by every theme.
-   Each theme only sets the color variables below.
+   Aurea design system: warm cream, deep plum and gold; flat, calm surfaces.
    ============================================================ */
 :root, :root[data-theme="aurea"] {
   --ink:#2f2a3d; --primary:#3b3550; --secondary:#6b6380; --accent:#d9a441; --muted:#b8b0a4; --light:#e7dfd0; --very-light:#f1ebdf; --danger:#9b5258;
@@ -906,38 +895,6 @@ blockquote { margin: 0; max-width: 440px; font-family: var(--font-serif), Georgi
   --line:rgba(59,53,80,.09); --line-strong:rgba(59,53,80,.16); --hover:rgba(59,53,80,.06); --hover-soft:rgba(59,53,80,.035);
   --overlay:rgba(59,53,80,.22); --overlay-shadow:rgba(59,53,80,.18); --overlay-soft:rgba(59,53,80,.10);
   --shadow:none; --shadow-soft:0 1px 2px rgba(59,53,80,.05);
-}
-:root[data-theme="sage"] {
-  --ink:#263029; --primary:#2f4a3f; --secondary:#5f7268; --accent:#c9895b; --muted:#aab3a6; --light:#dde3d6; --very-light:#ebefe5; --danger:#9b5258;
-  --bg:#f7f8f3; --card:#fdfefb; --sidebar:#ebefe4; --on-primary:#f7f8f3; --external-event:#e4e7df; --habit-default:#d9e4cf; --event-default:#dfe8da;
-  --text-soft:#55655c; --text-muted:#85918a; --text-faint:#9fa79a;
-  --line:rgba(47,74,63,.09); --line-strong:rgba(47,74,63,.16); --hover:rgba(47,74,63,.06); --hover-soft:rgba(47,74,63,.035);
-  --overlay:rgba(47,74,63,.22); --overlay-shadow:rgba(47,74,63,.18); --overlay-soft:rgba(47,74,63,.10);
-  --shadow:none; --shadow-soft:0 1px 2px rgba(47,74,63,.05);
-}
-:root[data-theme="clay"] {
-  --ink:#34261f; --primary:#4a2f27; --secondary:#7d6258; --accent:#c8664a; --muted:#bfa99c; --light:#ecdccf; --very-light:#f5ebe2; --danger:#9b4a45;
-  --bg:#fcf7f2; --card:#fffcf8; --sidebar:#f3e7dc; --on-primary:#fcf7f2; --external-event:#ece4dc; --habit-default:#efd2bf; --event-default:#f0dccd;
-  --text-soft:#6d5850; --text-muted:#9a8a82; --text-faint:#b09c8c;
-  --line:rgba(74,47,39,.09); --line-strong:rgba(74,47,39,.16); --hover:rgba(74,47,39,.06); --hover-soft:rgba(74,47,39,.035);
-  --overlay:rgba(74,47,39,.22); --overlay-shadow:rgba(74,47,39,.18); --overlay-soft:rgba(74,47,39,.10);
-  --shadow:none; --shadow-soft:0 1px 2px rgba(74,47,39,.05);
-}
-:root[data-theme="tide"] {
-  --ink:#233040; --primary:#26394d; --secondary:#5d6e80; --accent:#e0a458; --muted:#a9b4be; --light:#d9e2e9; --very-light:#e9eff3; --danger:#9b5258;
-  --bg:#f6f8f9; --card:#fdfefe; --sidebar:#e8eef1; --on-primary:#f6f8f9; --external-event:#e3e8ec; --habit-default:#d3e1ea; --event-default:#dce6ee;
-  --text-soft:#546375; --text-muted:#7d8995; --text-faint:#a0aab3;
-  --line:rgba(38,57,77,.09); --line-strong:rgba(38,57,77,.16); --hover:rgba(38,57,77,.06); --hover-soft:rgba(38,57,77,.035);
-  --overlay:rgba(38,57,77,.22); --overlay-shadow:rgba(38,57,77,.18); --overlay-soft:rgba(38,57,77,.10);
-  --shadow:none; --shadow-soft:0 1px 2px rgba(38,57,77,.05);
-}
-:root[data-theme="rose"] {
-  --ink:#36262c; --primary:#5a2e3a; --secondary:#87636d; --accent:#d38b7f; --muted:#c4aeb2; --light:#efdfe0; --very-light:#f7ecec; --danger:#9b4a55;
-  --bg:#fcf7f6; --card:#fffcfb; --sidebar:#f4e7e6; --on-primary:#fcf7f6; --external-event:#ede4e3; --habit-default:#efd3d3; --event-default:#f0dfe2;
-  --text-soft:#6e5660; --text-muted:#9c8990; --text-faint:#b19ea3;
-  --line:rgba(90,46,58,.09); --line-strong:rgba(90,46,58,.16); --hover:rgba(90,46,58,.06); --hover-soft:rgba(90,46,58,.035);
-  --overlay:rgba(90,46,58,.22); --overlay-shadow:rgba(90,46,58,.18); --overlay-soft:rgba(90,46,58,.10);
-  --shadow:none; --shadow-soft:0 1px 2px rgba(90,46,58,.05);
 }
 html body { background:var(--bg); }
 

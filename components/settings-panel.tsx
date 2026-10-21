@@ -2,9 +2,9 @@
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { resolvedTimeZone } from "@/lib/aurea/date";
-import { paletteSlot, THEME_IDS, THEME_META } from "@/lib/aurea/theme";
+import { CATEGORY_COLORS } from "@/lib/aurea/theme";
 import { useAurea } from "./aurea-provider";
-import type { Category, AureaSettings, AureaState, ThemeId } from "@/lib/aurea/types";
+import type { Category, AureaSettings, AureaState } from "@/lib/aurea/types";
 import { AureaLogo } from "@/components/aurea-logo";
 
 const TIME_ZONES = [
@@ -58,7 +58,6 @@ export function SettingsPanel() {
     updateSettings,
     addCategory,
     updateCategory,
-    updateHabit,
     deleteCategory,
     reorderCategory,
     importState,
@@ -163,7 +162,7 @@ export function SettingsPanel() {
     const name = newCategory.name.trim();
     if (!name) return;
     addCategory({ name, color: newCategory.color });
-    setNewCategory({ name: "", color: THEME_META[state.settings.theme].categoryColors[0] });
+    setNewCategory({ name: "", color: CATEGORY_COLORS[0] });
   }
 
   async function connectCloud(event: FormEvent) {
@@ -196,22 +195,6 @@ export function SettingsPanel() {
     if (target) reorderCategory(id, target.id);
   }
 
-  function chooseTheme(theme: ThemeId) {
-    // Categories still using a built-in palette color move to the same slot in the new palette;
-    // custom colors stay as they are.
-    state.categories.forEach((category) => {
-      const slot = paletteSlot(category.color, state.settings.theme);
-      const next = slot == null ? undefined : THEME_META[theme].categoryColors[slot];
-      if (next && next.toLowerCase() !== category.color.toLowerCase()) updateCategory(category.id, { color: next });
-    });
-    const builtInHabitColors = new Set(THEME_IDS.map((id) => THEME_META[id].habitColor.toLowerCase()));
-    state.habits.filter((habit) => habit.color && builtInHabitColors.has(habit.color.toLowerCase())).forEach((habit) => updateHabit(habit.id, { color: THEME_META[theme].habitColor }));
-    updateSettings({ theme });
-    setDayDraft((current) => ({ ...current, theme }));
-    const firstColor = THEME_META[theme].categoryColors[0];
-    setNewCategory((current) => ({ ...current, color: firstColor }));
-  }
-
   const dayStartOptions = Array.from({ length: 24 }, (_, hour) => hour);
   const dayEndOptions = Array.from({ length: 47 - dayDraft.dayStartHour }, (_, index) => dayDraft.dayStartHour + 1 + index);
 
@@ -234,18 +217,13 @@ export function SettingsPanel() {
         </section>
 
         <section className="panel settings-card">
-          <div className="settings-card-heading"><div><span className="settings-icon">◒</span><div><h2>Theme</h2><p>Your choice follows your Aurea account.</p></div></div></div>
-          <div className="settings-fields"><div className="theme-grid">{THEME_IDS.map((themeId) => { const theme = THEME_META[themeId]; return <button key={themeId} className={`theme-card ${state.settings.theme === themeId ? "active" : ""}`} onClick={() => chooseTheme(themeId)}><span className="theme-swatches">{theme.preview.map((color) => <i key={color} style={{ background: color }} />)}</span><strong>{theme.name}</strong><small>{theme.description}</small></button>; })}</div></div>
-        </section>
-
-        <section className="panel settings-card">
           <div className="settings-card-heading"><div><span className="settings-icon">◌</span><div><h2>Reminders</h2><p>Browser reminders plus your end-of-day check-in.</p></div></div></div>
           <div className="settings-fields"><div className="status-row"><div><strong>Browser notifications</strong><small>{typeof window !== "undefined" && "Notification" in window ? `Permission: ${Notification.permission}` : "Not supported in this browser"}</small></div><button className="soft-button" onClick={enableNotifications}>{state.settings.notificationsEnabled ? "Enabled" : "Enable"}</button></div><div className="status-row"><div><strong>Remind me when Aurea is closed</strong><small>{pushStatus}</small></div><button className="soft-button" onClick={togglePush} disabled={pushBusy || !cloudEmail || pushSupport !== "supported"}>{pushBusy ? "Working…" : pushEnabled ? "Turn off" : "Turn on"}</button></div>{pushMessage && <p className="settings-note">{pushMessage}</p>}<p className="settings-note">Aurea only sends task/routine notifications when you choose a reminder. Turn on closed-app reminders on each phone or computer you want them on.</p></div>
         </section>
 
         <section className="panel settings-card wide-card">
           <div className="settings-card-heading"><div><span className="settings-icon">◐</span><div><h2>Task categories</h2><p>Use Aurea&apos;s suggested colors or pick any custom color.</p></div></div></div>
-          <div className="category-settings-list">{state.categories.map((category, index) => <CategoryRow key={category.id} category={category} first={index === 0} last={index === state.categories.length - 1} palette={THEME_META[state.settings.theme].categoryColors} onUpdate={updateCategory} onDelete={deleteCategory} onMove={moveCategory} />)}<form className="add-category-row category-add-expanded" onSubmit={addNewCategory}><input type="color" value={newCategory.color} onChange={(e) => setNewCategory((current) => ({ ...current, color: e.target.value }))} /><input placeholder="New category" value={newCategory.name} onChange={(e) => setNewCategory((current) => ({ ...current, name: e.target.value }))} /><span className="palette-swatches">{THEME_META[state.settings.theme].categoryColors.map((color) => <button key={color} type="button" title={color} style={{ background: color }} onClick={() => setNewCategory((current) => ({ ...current, color }))} />)}</span><button className="soft-button" type="submit">Add</button></form></div>
+          <div className="category-settings-list">{state.categories.map((category, index) => <CategoryRow key={category.id} category={category} first={index === 0} last={index === state.categories.length - 1} palette={CATEGORY_COLORS} onUpdate={updateCategory} onDelete={deleteCategory} onMove={moveCategory} />)}<form className="add-category-row category-add-expanded" onSubmit={addNewCategory}><input type="color" value={newCategory.color} onChange={(e) => setNewCategory((current) => ({ ...current, color: e.target.value }))} /><input placeholder="New category" value={newCategory.name} onChange={(e) => setNewCategory((current) => ({ ...current, name: e.target.value }))} /><span className="palette-swatches">{CATEGORY_COLORS.map((color) => <button key={color} type="button" title={color} style={{ background: color }} onClick={() => setNewCategory((current) => ({ ...current, color }))} />)}</span><button className="soft-button" type="submit">Add</button></form></div>
         </section>
 
         <section className="panel settings-card">

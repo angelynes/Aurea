@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { addDays, dateKey, durationInputParts, durationToMinutes, type DurationUnit } from "@/lib/aurea/date";
-import { THEME_META } from "@/lib/aurea/theme";
+import { HABIT_COLOR } from "@/lib/aurea/theme";
 import { useAurea } from "./aurea-provider";
 import { ReminderPicker } from "./reminder-picker";
 import { reminderFields, reminderOffsets } from "@/lib/aurea/reminders";
@@ -28,7 +28,7 @@ export function HabitModal({
   const [deletePrompt, setDeletePrompt] = useState(false);
   const [subtasks, setSubtasks] = useState<HabitSubtask[]>([]);
   const [newSubtask, setNewSubtask] = useState("");
-  const [color, setColor] = useState(THEME_META[state.settings.theme].habitColor);
+  const [color, setColor] = useState(HABIT_COLOR);
   const initialDuration = durationInputParts(habit?.durationMinutes);
   const [durationValue, setDurationValue] = useState(initialDuration.value);
   const [durationUnit, setDurationUnit] = useState<DurationUnit>(initialDuration.unit);
@@ -42,11 +42,11 @@ export function HabitModal({
     setDeletePrompt(false);
     setSubtasks(habit?.subtasks ?? []);
     setNewSubtask("");
-    setColor(habit?.color ?? THEME_META[state.settings.theme].habitColor);
+    setColor(habit?.color ?? HABIT_COLOR);
     const duration = durationInputParts(habit?.durationMinutes);
     setDurationValue(duration.value);
     setDurationUnit(duration.unit);
-  }, [open, habit, state.settings.theme]);
+  }, [open, habit]);
 
   if (!open) return null;
 
