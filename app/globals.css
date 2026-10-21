@@ -975,3 +975,11 @@ html .modal-backdrop { background:var(--overlay); backdrop-filter:none; }
 .legal-links a { color: var(--text-muted); }
 .legal-links a:hover { color: var(--primary); text-decoration: underline; }
 .settings-note a { color: var(--primary); text-decoration: underline; }
+
+/* Sign-in: Google first, email code tucked underneath */
+.oauth-button.primary-oauth { min-height: 46px; background: var(--primary); color: var(--on-primary); border-color: var(--primary); font-weight: 600; }
+.oauth-button.primary-oauth:hover { background: color-mix(in srgb, var(--primary) 88%, white); }
+.email-signin { margin-top: 4px; }
+.email-signin summary { cursor: pointer; color: var(--secondary); font-size: 13px; padding: 6px 0; }
+.email-signin summary:hover { color: var(--primary); }
+.email-signin[open] summary { margin-bottom: 8px; }
