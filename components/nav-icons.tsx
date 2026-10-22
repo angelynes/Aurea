@@ -20,3 +20,7 @@ export function SearchIcon() {
 export function ReviewIcon() {
   return <svg {...common}><path d="M4 19.5V9M10 19.5V5M16 19.5v-7M21 19.5H3" /></svg>;
 }
+
+export function SidebarIcon() {
+  return <svg {...common}><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><path d="M9.5 4.5v15" /></svg>;
+}
