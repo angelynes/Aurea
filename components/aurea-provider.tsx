@@ -7,6 +7,7 @@ import { createSeedState } from "@/lib/aurea/seed";
 import { toAureaCategoryColor, toAureaHabitColor } from "@/lib/aurea/theme";
 import { deepEqual, merge3 } from "@/lib/aurea/merge";
 import { placeProjectTasksOnStatusChange } from "@/lib/aurea/ordering";
+import { firstSyncMerge, rehomeOrphanedTasks, SYNC_PROTOCOL } from "@/lib/aurea/sync";
 import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromPush, type PushSupport } from "@/lib/push";
 import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
@@ -23,6 +24,8 @@ import type {
 const STORAGE_KEY = "aurea-planner-state-v2";
 /** Last planner copy this device and the cloud agreed on, used to merge changes from other devices. */
 const SYNC_BASE_KEY = "aurea-sync-base-v1";
+/** Account whose planner this device last synced, so a different account never absorbs it. */
+const LOCAL_OWNER_KEY = "aurea-local-owner";
 const GOOGLE_CALENDAR_TOKEN_KEY = "aurea-google-calendar-token";
 const GOOGLE_OAUTH_INTENT_KEY = "aurea-google-oauth-intent";
 // The app was called NOVA before; carry existing device data over to the new keys.
@@ -187,7 +190,8 @@ function normalizeState(input: unknown): AureaState | null {
     lastUpdatedAt: state.lastUpdatedAt ?? new Date().toISOString(),
   };
 
-  return removeLegacyDemoData(normalized);
+  normalized.syncProtocol = SYNC_PROTOCOL;
+  return rehomeOrphanedTasks(removeLegacyDemoData(normalized), zonedNow(settings.timeZone).dateKey);
 }
 
 export function AureaProvider({ children }: { children: React.ReactNode }) {
@@ -243,6 +247,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     cloudBaseRef.current = base;
     try {
       if (userId && base && version != null) window.localStorage.setItem(SYNC_BASE_KEY, JSON.stringify({ userId, version, base }));
+      if (userId && base) window.localStorage.setItem(LOCAL_OWNER_KEY, userId);
       else window.localStorage.removeItem(SYNC_BASE_KEY);
     } catch {
       // Storage full: merging still works for this session.
@@ -254,15 +259,22 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
    * the last copy both agreed on). Returns true when the merged result still needs saving.
    */
   const pullAndMerge = useCallback(async (client: SupabaseClient, userId: string): Promise<boolean> => {
-    const startSnapshot = stateRef.current;
     const { data, error } = await client.from("app_state").select("data, version").eq("user_id", userId).maybeSingle();
     if (error) throw error;
     if (!data?.data) { rememberCloud(userId, null, null); return true; }
     const remote = normalizeState(data.data);
     if (!remote) return false;
-    // First sync on this device: the cloud copy wins, plus anything edited while it loaded.
-    const base = cloudBaseRef.current ?? startSnapshot;
-    const merged = normalizeState(merge3(base, stateRef.current, remote)) ?? remote;
+    let combined: AureaState;
+    if (cloudBaseRef.current) {
+      combined = merge3(cloudBaseRef.current, stateRef.current, remote) as AureaState;
+    } else {
+      // First sync on this device: keep anything made here before signing in, unless this
+      // device's planner belonged to a different account (then the cloud copy wins).
+      let owner: string | null = null;
+      try { owner = window.localStorage.getItem(LOCAL_OWNER_KEY); } catch { /* storage unavailable */ }
+      combined = !owner || owner === userId ? firstSyncMerge(stateRef.current, remote, createSeedState()) : remote;
+    }
+    const merged = normalizeState(combined) ?? remote;
     const needsSave = !deepEqual(merged, remote);
     rememberCloud(userId, Number(data.version ?? 0), remote);
     stateRef.current = merged;
@@ -278,7 +290,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
       const version = cloudVersionRef.current;
       const updatedAt = new Date().toISOString();
       if (version == null) {
-        const { data, error } = await client.from("app_state").insert({ user_id: userId, data: snapshot, updated_at: updatedAt }).select("version").single();
+        const { data, error } = await client.from("app_state").insert({ user_id: userId, data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).select("version").single();
         if (!error && data) {
           rememberCloud(userId, Number(data.version ?? 0), snapshot);
           if (stateRef.current === snapshot) dirtyRef.current = false;
@@ -286,7 +298,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
         }
         if (error && error.code !== "23505") throw error;
       } else {
-        const { data, error } = await client.from("app_state").update({ data: snapshot, updated_at: updatedAt }).eq("user_id", userId).eq("version", version).select("version");
+        const { data, error } = await client.from("app_state").update({ data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).eq("user_id", userId).eq("version", version).select("version");
         if (error) throw error;
         if (data?.length) {
           rememberCloud(userId, Number(data[0].version ?? 0), snapshot);
@@ -585,7 +597,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     return id;
   }, [mutate]);
   const updateProject = useCallback((id: string, patch: Partial<Project>) => { mutate((current) => ({ ...current, projects: current.projects.map((project) => project.id === id ? { ...project, ...patch } : project) })); }, [mutate]);
-  const deleteProject = useCallback((id: string) => { mutate((current) => ({ ...current, projects: current.projects.filter((project) => project.id !== id), tasks: current.tasks.map((task) => task.projectId === id ? { ...task, projectId: undefined, status: task.status === "in_progress" ? "todo" : task.status } : task) })); }, [mutate]);
+  // Its tasks stay in Aurea; undated ones move to Today so they don't vanish from every view.
+  const deleteProject = useCallback((id: string) => { mutate((current) => rehomeOrphanedTasks({ ...current, projects: current.projects.filter((project) => project.id !== id) }, zonedNow(current.settings.timeZone).dateKey)); }, [mutate]);
 
   const addCategory = useCallback((category: Omit<Category, "id">) => { const id = crypto.randomUUID(); mutate((current) => ({ ...current, categories: [...current.categories, { ...category, id }] })); return id; }, [mutate]);
   const updateCategory = useCallback((id: string, patch: Partial<Category>) => { mutate((current) => ({ ...current, categories: current.categories.map((category) => category.id === id ? { ...category, ...patch } : category) })); }, [mutate]);

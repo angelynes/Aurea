@@ -1214,3 +1214,8 @@ html .modal-backdrop { background:var(--overlay); backdrop-filter:none; }
 @media (prefers-reduced-motion: reduce) {
   .desktop-sidebar, .main-content { transition: none; }
 }
+
+/* "New version" bar */
+.update-banner { position: fixed; z-index: 90; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 18px; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--card); box-shadow: 0 16px 40px var(--overlay-soft); color: var(--ink); font-size: 14px; white-space: nowrap; }
+.update-banner .primary-button { min-height: 36px; padding: 0 16px; }
+@media (max-width: 860px) { .update-banner { bottom: calc(92px + env(safe-area-inset-bottom)); } }

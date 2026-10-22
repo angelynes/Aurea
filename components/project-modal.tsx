@@ -34,7 +34,7 @@ export function ProjectModal({ open, onClose, project }: { open: boolean; onClos
           <label className="field"><span>Color</span><input className="color-input" name="color" type="color" defaultValue={project?.color ?? "#B29CE4"} /></label>
           <label className="field"><span>Status</span><select name="status" defaultValue={project?.status ?? "active"}><option value="active">Active</option><option value="archived">Archived</option></select></label>
         </div>
-        <div className="modal-actions">{project ? <button type="button" className="danger-button" onClick={() => { if (confirm("Delete this project? Tasks will stay in Aurea without a project.")) { deleteProject(project.id); onClose(); } }}>Delete</button> : <span />}<button className="primary-button" type="submit">{project ? "Save project" : "Create project"}</button></div>
+        <div className="modal-actions">{project ? <button type="button" className="danger-button" onClick={() => { if (confirm("Delete this project? Its tasks will stay in Aurea, and any without a date will move to Today.")) { deleteProject(project.id); onClose(); } }}>Delete</button> : <span />}<button className="primary-button" type="submit">{project ? "Save project" : "Create project"}</button></div>
       </form>
     </div>
   );

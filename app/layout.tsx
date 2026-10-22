@@ -5,6 +5,7 @@ import "./globals.generated.css";
 import { AureaProvider } from "@/components/aurea-provider";
 import { ReminderWatcher } from "@/components/reminder-watcher";
 import { PwaRegister } from "@/components/pwa-register";
+import { UpdateBanner } from "@/components/update-banner";
 
 const serif = Newsreader({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AureaProvider>
           <PwaRegister />
           <ReminderWatcher />
+          <UpdateBanner />
           {children}
         </AureaProvider>
       </body>

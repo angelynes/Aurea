@@ -141,5 +141,7 @@ export type AureaState = {
   settings: AureaSettings;
   /** Weekly review notes, keyed by the week's first day (YYYY-MM-DD). */
   weeklyReviews?: Record<string, WeeklyReviewNotes>;
+  /** Sync format of the app that saved this planner (see lib/aurea/sync.ts). */
+  syncProtocol?: number;
   lastUpdatedAt: string;
 };
