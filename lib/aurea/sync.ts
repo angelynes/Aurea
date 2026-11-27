@@ -58,3 +58,26 @@ export function rehomeOrphanedTasks(state: AureaState, today: string): AureaStat
       : task),
   };
 }
+
+/** Message shown when the database stops accepting this device's sign-in. */
+export const SIGN_IN_EXPIRED_MESSAGE = "Your sign-in expired, so Aurea can't sync right now. Sign in again to keep your devices together.";
+
+/**
+ * True when a Supabase/PostgREST failure means the sign-in itself was refused (expired or
+ * invalid session), as opposed to a network problem or a database rule.
+ */
+export function isAuthError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { status, code, message } = error as { status?: number; code?: string; message?: string };
+  if (status === 401) return true;
+  if (typeof code === "string" && /^PGRST30\d$/.test(code)) return true;
+  return /\bjwt\b|token (is )?expired|invalid (refresh )?token|refresh token not found/i.test(message ?? "");
+}
+
+/** A short, readable reason for a sync failure, for the Settings card. */
+export function syncErrorMessage(error: unknown): string {
+  if (isAuthError(error)) return SIGN_IN_EXPIRED_MESSAGE;
+  const message = error && typeof error === "object" && "message" in error ? String((error as { message?: unknown }).message ?? "") : "";
+  if (/failed to fetch|network|load failed/i.test(message)) return "Aurea couldn't reach the cloud. Check your connection and try Sync now.";
+  return message ? `Sync failed: ${message}` : "Sync failed. Try Sync now in a moment.";
+}
