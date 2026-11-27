@@ -418,7 +418,7 @@ blockquote { margin: 0; max-width: 440px; font-family: var(--font-serif), Georgi
 .status-pill { justify-self: start; display: inline-flex; align-items: center; min-height: 25px; padding: 0 9px; border-radius: 999px; font-size: 9px; text-transform: capitalize; background: #eee9f5; color: #786a8c; }
 .status-pill.synced { background: #e8f2eb; color: #5e7f67; }
 .status-pill.connecting { background: #f2edf9; color: #765e9c; }
-.status-pill.error { background: #f8e9ed; color: var(--danger); }
+.status-pill.error, .status-pill.expired { background: #f8e9ed; color: var(--danger); }
 .inline-actions, .data-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cloud-form { display: grid; gap: 10px; }
 .data-actions { padding: 18px; }

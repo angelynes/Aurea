@@ -7,7 +7,7 @@ import { createSeedState } from "@/lib/aurea/seed";
 import { toAureaCategoryColor, toAureaHabitColor } from "@/lib/aurea/theme";
 import { deepEqual, merge3 } from "@/lib/aurea/merge";
 import { placeProjectTasksOnStatusChange } from "@/lib/aurea/ordering";
-import { firstSyncMerge, rehomeOrphanedTasks, SYNC_PROTOCOL } from "@/lib/aurea/sync";
+import { firstSyncMerge, isAuthError, rehomeOrphanedTasks, SIGN_IN_EXPIRED_MESSAGE, SYNC_PROTOCOL, syncErrorMessage } from "@/lib/aurea/sync";
 import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromPush, type PushSupport } from "@/lib/push";
 import { addDays, dateKey, minutesFromTime, taskIsCompletedOn, taskOccursOn, zonedNow } from "@/lib/aurea/date";
 import type {
@@ -36,7 +36,7 @@ const LEGACY_STORAGE_KEYS: Array<[string, string]> = [
 ];
 const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 
-type CloudStatus = "local" | "connecting" | "synced" | "error";
+type CloudStatus = "local" | "connecting" | "synced" | "error" | "expired";
 
 type Result = { ok: boolean; message: string };
 
@@ -70,6 +70,8 @@ type AureaContextValue = {
   resetState: () => void;
   cloudConfigured: boolean;
   cloudStatus: CloudStatus;
+  /** Why the last sync failed, in plain words; null when the last sync worked. */
+  cloudError: string | null;
   cloudEmail: string | null;
   sendMagicLink: (email: string) => Promise<Result>;
   verifyEmailOtp: (email: string, token: string) => Promise<Result>;
@@ -199,6 +201,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [cloudStatus, setCloudStatus] = useState<CloudStatus>("local");
+  const [cloudError, setCloudError] = useState<string | null>(null);
+  const authExpiredRef = useRef(false);
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupportState, setPushSupportState] = useState<PushSupport>("unsupported");
@@ -259,8 +263,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
    * the last copy both agreed on). Returns true when the merged result still needs saving.
    */
   const pullAndMerge = useCallback(async (client: SupabaseClient, userId: string): Promise<boolean> => {
-    const { data, error } = await client.from("app_state").select("data, version").eq("user_id", userId).maybeSingle();
-    if (error) throw error;
+    const { data, error, status } = await client.from("app_state").select("data, version").eq("user_id", userId).maybeSingle();
+    if (error) throw Object.assign(error, { status });
     if (!data?.data) { rememberCloud(userId, null, null); return true; }
     const remote = normalizeState(data.data);
     if (!remote) return false;
@@ -290,16 +294,16 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
       const version = cloudVersionRef.current;
       const updatedAt = new Date().toISOString();
       if (version == null) {
-        const { data, error } = await client.from("app_state").insert({ user_id: userId, data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).select("version").single();
+        const { data, error, status } = await client.from("app_state").insert({ user_id: userId, data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).select("version").single();
         if (!error && data) {
           rememberCloud(userId, Number(data.version ?? 0), snapshot);
           if (stateRef.current === snapshot) dirtyRef.current = false;
           return;
         }
-        if (error && error.code !== "23505") throw error;
+        if (error && error.code !== "23505") throw Object.assign(error, { status });
       } else {
-        const { data, error } = await client.from("app_state").update({ data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).eq("user_id", userId).eq("version", version).select("version");
-        if (error) throw error;
+        const { data, error, status } = await client.from("app_state").update({ data: { ...snapshot, syncProtocol: SYNC_PROTOCOL }, updated_at: updatedAt }).eq("user_id", userId).eq("version", version).select("version");
+        if (error) throw Object.assign(error, { status });
         if (data?.length) {
           rememberCloud(userId, Number(data[0].version ?? 0), snapshot);
           if (stateRef.current === snapshot) dirtyRef.current = false;
@@ -323,7 +327,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     }
     syncingRef.current = true;
     setCloudStatus("connecting");
-    try {
+    const syncOnce = async () => {
       if (!cloudReadyRef.current && !cloudBaseRef.current) {
         try {
           const saved = JSON.parse(window.localStorage.getItem(SYNC_BASE_KEY) ?? "null");
@@ -339,9 +343,28 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
       } else if (dirtyRef.current) {
         await pushToCloud(client, userId);
       }
+    };
+    try {
+      try {
+        await syncOnce();
+      } catch (error) {
+        if (!isAuthError(error)) throw error;
+        // The database refused this device's sign-in. Renew it once and try again.
+        const { data: refreshed, error: refreshError } = await client.auth.refreshSession();
+        if (refreshError || !refreshed.session || refreshed.session.user.id !== userId) throw Object.assign(new Error(SIGN_IN_EXPIRED_MESSAGE), { status: 401 });
+        sessionRef.current = refreshed.session;
+        setSession(refreshed.session);
+        await syncOnce();
+      }
+      authExpiredRef.current = false;
+      setCloudError(null);
       setCloudStatus("synced");
-    } catch {
-      setCloudStatus("error");
+    } catch (error) {
+      console.warn("Aurea sync failed", error);
+      const expired = isAuthError(error);
+      authExpiredRef.current = expired;
+      setCloudError(syncErrorMessage(error));
+      setCloudStatus(expired ? "expired" : "error");
     } finally {
       syncingRef.current = false;
       const pending = pendingSyncRef.current;
@@ -379,6 +402,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
       setSession(nextSession);
       sessionRef.current = nextSession;
       captureProviderToken(nextSession);
+      if (nextSession && (_event === "SIGNED_IN" || _event === "TOKEN_REFRESHED")) { authExpiredRef.current = false; setCloudError(null); }
       if (nextSession) window.setTimeout(() => void runSyncRef.current("pull"), 0);
       else {
         cloudReadyRef.current = false;
@@ -392,8 +416,9 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     const onVisible = () => { if (sessionRef.current && document.visibilityState === "visible") void runSyncRef.current("pull"); };
     const checkVersion = async () => {
       const userId = sessionRef.current?.user.id;
-      if (!userId || document.visibilityState !== "visible" || syncingRef.current || !cloudReadyRef.current) return;
-      const { data } = await (client as SupabaseClient).from("app_state").select("version").eq("user_id", userId).maybeSingle();
+      if (!userId || authExpiredRef.current || document.visibilityState !== "visible" || syncingRef.current || !cloudReadyRef.current) return;
+      const { data, error, status } = await (client as SupabaseClient).from("app_state").select("version").eq("user_id", userId).maybeSingle();
+      if (error && isAuthError({ ...error, status })) { void runSyncRef.current("pull"); return; }
       if (data && Number(data.version) !== cloudVersionRef.current) void runSyncRef.current("pull");
     };
     const poll = window.setInterval(checkVersion, 30_000);
@@ -408,7 +433,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
   }, [hydrated, cloudConfigured, captureProviderToken]);
 
   useEffect(() => {
-    if (!hydrated || !session || !cloudReadyRef.current || !dirtyRef.current) return;
+    if (!hydrated || !session || !cloudReadyRef.current || !dirtyRef.current || authExpiredRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setCloudStatus("connecting");
     saveTimerRef.current = setTimeout(() => { void runSyncRef.current("push"); }, 350);
@@ -725,6 +750,8 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     rememberCloud(null, null, null);
     window.localStorage.removeItem(GOOGLE_CALENDAR_TOKEN_KEY);
     setGoogleCalendarConnected(false);
+    authExpiredRef.current = false;
+    setCloudError(null);
     setCloudStatus("local");
   }, [rememberCloud]);
 
@@ -857,7 +884,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
-    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, cloudEmail: session?.user.email ?? null,
+    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, cloudError, cloudEmail: session?.user.email ?? null,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupport: pushSupportState, pushEnabled, enablePush, disablePush,
@@ -865,7 +892,7 @@ export function AureaProvider({ children }: { children: React.ReactNode }) {
     state, hydrated, addTask, updateTask, deleteTask, reorderTask, toggleTask, toggleTaskSubtask, setTaskStatus,
     addProject, updateProject, deleteProject, addCategory, updateCategory, deleteCategory, reorderCategory,
     addHabit, updateHabit, deleteHabit, toggleHabit, toggleHabitSubtask, importExternalEvents, clearImportedEvents,
-    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, session,
+    updateSettings, saveWeeklyReview, importState, resetState, cloudConfigured, cloudStatus, cloudError, session,
     sendMagicLink, verifyEmailOtp, signInWithProvider, signOutCloud, deleteAccount, syncNow,
     googleCalendarConnected, connectGoogleCalendar, syncGoogleCalendar, disconnectGoogleCalendar,
     pushSupportState, pushEnabled, enablePush, disablePush,
