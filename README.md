@@ -1,506 +1,68 @@
-# Aurea Planner
+# 🌙 Aurea Planner
 
-Aurea is a responsive personal planner that brings daily planning, projects, calendar events, routines, and cloud sync into one place.
+**One calm place for your tasks, projects, routines, and calendar, synced across laptop and phone.** 
 
-The app is designed around a simple idea: **one item can appear in the right place everywhere without being duplicated**. A project task can live inside its project, appear in Today when it is due, and show on the schedule when it has a time.
+### [Try the live app](https://my-aurea-planner.vercel.app) 
 
-Aurea currently runs as a responsive web app / PWA and is optimized for both laptop and phone use.
+![Aurea welcome page](docs/screenshots/welcome.png)
 
----
-
-## Current build: V1.2.4
-
-This version includes the September 17–21 planning, personalization, behavior, category-palette, project-backlog, and task-checklist updates.
-
-### Today
-
-- Responsive Today layout:
-  - desktop: unscheduled tasks on the left, schedule timeline on the right
-  - mobile: unscheduled tasks first, followed by a vertical Hobonichi-style timeline
-- Tasks can belong to both a **category** and a **project**
-- Tasks can contain customizable **subtasks/checklists**
-- Checking all subtasks completes the parent task; reopening a subtask reopens the parent task
-- Unscheduled tasks can be reordered
-- Tasks can be dragged into the schedule
-- Scheduled tasks can be moved back to Unscheduled
-- Scheduled cards show:
-  - task name
-  - full start/end time, such as `10:45 AM – 12:45 PM`
-  - duration on the right
-  - optional location
-  - `Notes` indicator when notes are present
-- Timeline cards are positioned using the actual minute instead of only the hour
-- Scheduled tasks automatically complete when their scheduled time has passed:
-  - tasks with a duration complete after their end time
-  - tasks without a duration complete after their start time
-- **Habits/routines never auto-complete** and must always be checked manually
-- Completed items stay synchronized between their different views
-- Task deletion supports:
-  - delete
-  - move scheduled task back to Unscheduled for today
-- Repeating tasks support:
-  - Daily
-  - Weekdays
-  - Weekends
-  - Weekly with custom weekdays
-  - Monthly
-  - Yearly
-  - Custom recurrence
-- Repeating items support deleting:
-  - this event only
-  - this and future events
-  - the entire series
-- Evening Review shows all unfinished tasks together and supports multi-select actions:
-  - move selected tasks to tomorrow
-  - move selected tasks to another date
-  - keep selected tasks overdue
-- Task Status only appears when a Project is selected
-- Project task status defaults to **To Do**
-- Project tasks can be left **Undated**, so they stay in the project backlog and do not appear on Today until a date is assigned
-- Aurea uses its own selected time zone for schedule behavior and automatic completion
+![Aurea Today view](docs/screenshots/today.png) 
 
 ---
 
-## Routines / Habits
+## Why I built it 
 
-Habits have evolved into repeatable routines.
+I was juggling a to-do app, a project board, a habit tracker, and a calendar, and none of them talked to each other. Aurea's core idea is that **one item shows up everywhere it belongs without being duplicated**: a project task lives in its project, appears on Today when it's due, and lands on the schedule when it has a time. 
 
-A routine can have:
+I use it every day, and it has gone through 6+ versions driven by my own feedback and friends' testing. 
 
-- its own name, such as `Morning Routine`
-- its own color
-- custom repeat days
-- optional scheduled time
-- optional duration
-- optional reminder
-- customizable subtasks
+## What it does 
 
-Examples:
-
-- Morning Routine
-  - Vitamins
-  - Skincare
-  - Water
-  - Make bed
-
-Scheduled routines:
-
-- remain visible in the Habits/Routines section
-- also appear on the Today timeline
-- use a different visual treatment from normal tasks
-- share the same completion state between the Habits section and timeline
-- always require manual completion
-
-Completing all subtasks can complete the parent routine.
-
----
-
-## Calendar
-
-Aurea includes a clean monthly calendar view designed to stay visually simple.
-
-- Click a date to reveal its schedule, tasks, and routines
-- Aurea tasks and scheduled routines appear in the calendar
-- Google Calendar read-only sync is available as a beta
-- Google Calendar events can appear in Today and Calendar
-- `.ics` calendar import is supported
-- Apple Calendar direct device access is **not** implemented in the browser/PWA version
-
-### Google Calendar beta
-
-Google Calendar uses Google OAuth with the read-only Calendar scope.
-
-Current behavior:
-
-- imports the user's primary Google Calendar
-- read-only inside Aurea
-- use **Sync Google** to refresh
-- browser OAuth tokens may eventually require reconnecting
-
-Google Calendar must be enabled and configured in Google Cloud and Supabase before use.
-
-### Apple Calendar
-
-The current web/PWA version supports `.ics` import.
-
-Direct access to the iPhone/iPad calendar database requires a future native Apple build using EventKit. Aurea does not fake native Apple Calendar access in the browser.
-
----
-
-## Projects
-
-Projects use a Kanban-style workflow.
-
-Desktop:
-
-- To Do
-- In Progress
-- Completed
-
-Mobile:
-
-- tabbed/swipe-friendly project stages
-
-Project features include:
-
-- manual task ordering inside each Kanban status (drag-and-drop on desktop, arrows on mobile)
-- undated project backlog tasks
-- task subtasks/checklists with progress
-- project description
-- project color
-- progress tracking
-- drag-and-drop task status
-- archive project
-- Archived Projects section
-- unarchive project
-- project progress / update history
-
-### Project updates
-
-Each project can keep a timestamped update feed similar to comments or progress notes.
-
-Updates can be:
-
-- added
-- edited
-- deleted
-
-This can be used as a lightweight project journal or progress overview.
-
-The project header now shows **only the project description entered by the user**. If there is no description, the area stays empty.
-
----
-
-## Categories
-
-Default categories:
-
-- Personal
-- Work
-- Errands
-
-Users can:
-
-- create custom categories
-- choose category colors
-- reorder categories
-- delete categories
-- choose from Aurea's five pastel category presets: Blush Sky (`#FFD1DC`), Sage Mist (`#CFD8C5`), Peach Sorbet (`#FFE4E1`), Lavender Dusk (`#D8BFD8`), and Mint Frost (`#E0F7FA`)
-- still use a fully custom color picker
-
----
-
-## Look and feel
-
-Aurea has one look, taken from its logo: warm cream surfaces, a beige sidebar, deep plum (`#3B3550`) and gold (`#D9A441`), Newsreader headings, and flat cards with thin borders. There is no theme picker, which keeps the app simple.
-
-Color variables live at the end of `app/globals.css`; built-in category and routine colors are in `lib/aurea/theme.ts`. Accounts from older versions that chose another theme are moved to the Aurea look automatically, and their built-in category colors switch to the matching Aurea colors (custom colors are kept).
-
-Onboarding asks for a display name.
-
----
-
-## Profile
-
-- Default display name is `Profile`
-- Users can set their own display name
-- Profile name is saved with Aurea cloud state
-- Profile photos are supported
-- Profile photos are center-cropped and displayed as a true circular avatar
-
----
-
-## Authentication
-
-Aurea uses Supabase Auth.
-
-Supported sign-in options in the UI:
-
-- email OTP/code
-- email magic link
-- Google OAuth
-
-The Google provider must be enabled in Supabase for the Google button to work.
-
-### Email OTP / Home Screen sign-in
-
-For installed iPhone Home Screen use, email OTP is preferred because it avoids the magic-link flow opening a separate Safari tab.
-
-The Supabase Magic Link / OTP email template should contain:
-
-```text
-{{ .Token }}
+| | |
+|---|---|
+| **Today** | Unscheduled tasks next to a timeline; drag tasks onto the schedule; an evening review to roll unfinished tasks forward |
+| **Projects** | Kanban board (To Do → In Progress → Done), undated backlog, checklists, progress tracking, update log |
+| **Routines** | Repeating habits with their own checklists; they never auto-complete, so you always check them yourself |
+| **Calendar** | Monthly view, Google Calendar sync, `.ics` import |
+| **Everywhere** | Cloud sync across devices, installable on iPhone home screen, 4 themes, custom categories |
+ 
+## Built with
+ 
+**Next.js · TypeScript · Supabase** (auth + database) **· Vercel** (hosting) **· Resend** (email) **· Google Calendar API**
+ 
+```mermaid
+flowchart LR
+    U[Laptop / Phone / PWA] --> A[Next.js app on Vercel]
+    A --> S[Supabase Auth<br/>email code, Google, Apple]
+    A --> D[(Supabase database<br/>planner state)]
+    A --> G[Google Calendar API<br/>read-only]
+    S --> R[Resend<br/>sign-in emails]
 ```
-
-Aurea can verify the code directly inside the installed app.
-
-### Google Sign-In
-
-Google Sign-In can be used without a paid Google subscription.
-
-Google provider setup requires:
-
-- Google Cloud OAuth client
-- correct authorized app origin
-- Supabase callback URL
-- matching Client ID and Client Secret in Supabase
-
-### Apple Sign-In
-
-Apple Sign-In is not offered right now. Adding it later requires an Apple Developer Program membership and enabling the Apple provider in Supabase.
-
----
-
-## Cloud Sync
-
-Aurea uses Supabase for cloud sync.
-
-Planner state is stored in:
-
-```text
-public.app_state
-```
-
-The app currently stores planner data in the existing JSON state row, so V1.2.4 does not require a new database migration.
-
-Cloud sync is intended to keep the same Aurea account consistent across:
-
-- laptop
-- phone
-- installed PWA
-
----
-
-## Reminders when Aurea is closed
-
-Signed-in users can turn on **Settings → Reminders → Remind me when Aurea is closed** on each device. On iPhone/iPad this requires adding Aurea to the Home Screen first (iOS 16.4+).
-
-How it works:
-
-- the device subscribes to Web Push and is saved in `push_subscriptions`
-- Supabase `pg_cron` calls `/api/reminders/dispatch` every minute
-- the route reads each subscribed user's synced `app_state`, finds due task/routine reminders (`lib/aurea/reminders.ts`), and sends them with `web-push`
-- `sent_reminders` makes sure each reminder is sent once
-
-Setup:
-
-1. Run `supabase/push-reminders.sql` in the Supabase SQL Editor.
-2. Add these Vercel environment variables (Production and Preview): `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET` (from `vault.decrypted_secrets`, name `aurea_cron_secret`). Generate VAPID keys with `npx web-push generate-vapid-keys`.
-3. Redeploy.
-
-Devices without closed-app reminders still get in-app notifications while Aurea is open.
-
-## Email delivery
-
-Aurea uses Supabase Auth together with Resend for authentication email delivery.
-
-Typical flow:
-
-```text
-Aurea
-  ↓
-Supabase Auth
-  ↓
-Resend sends the email/code
-  ↓
-User signs in
-  ↓
-Supabase syncs Aurea data
-```
-
----
-
-## Location
-
-Location is currently kept intentionally simple.
-
-A task may contain an optional text location, but Aurea does **not** currently use:
-
-- Google Maps API
-- location autocomplete
-- live traffic
-- automatic travel-time calculation
-- paid Places/Routes integrations
-
-These can be added later if needed.
-
----
-
-## Time zones
-
-Aurea has its own time-zone setting.
-
-Current options include:
-
-- Automatic / device time zone
-- Pacific
-- Mountain
-- Central
-- Eastern
-- Jakarta
-- UTC
-
-The selected time zone is used for:
-
-- schedule display
-- identifying past scheduled tasks
-- automatic scheduled-task completion
-- daily planning behavior
-
----
-
-
-## V1.2.2 additions
-
-- Task and routine durations can be entered as any custom amount of **minutes, hours, or days**.
-- Existing tasks and routines can be **duplicated** from their edit window.
-- The Today timeline can extend past midnight into the following calendar day. For example, Monday can be configured to show **12 AM Monday through 4 AM Tuesday**. Early Tuesday scheduled items then appear at the bottom of Monday's extended schedule as well as in Tuesday's own view.
-- Timeline hour labels use `+1` for next-day hours.
-- Scheduled tasks with overnight or multi-day durations auto-complete only after their true end date/time. Habits/routines still never auto-complete.
-- Category suggestions use a lighter pastel palette. Known old Aurea palette colors migrate automatically; custom colors are preserved.
-- Profile photos use a stricter center crop and circular mask in both Settings and the sidebar.
-
-## Current completion behavior
-
-### Normal scheduled tasks
-
-Scheduled tasks automatically become completed when their scheduled time has passed.
-
-- with duration → complete after end time
-- without duration → complete after start time
-
-### Habits / routines
-
-Habits and routines never auto-complete.
-
-They always require the user to personally check them.
-
----
-
-## Current platform
-
-Aurea currently runs as:
-
-- responsive web app
-- installable PWA / Home Screen app
-
-The current web build is intended to work well on:
-
-- MacBook
-- desktop browser
-- iPhone
-- iPad browser / Home Screen
-
----
-
-## Native app plan
-
-A native Apple version is planned for later.
-
-The native iPhone/iPad version is the right place to add:
-
-- direct Apple Calendar / EventKit access
-- native deep-link authentication
-- more reliable background notifications
-- native widgets
-- improved device integrations
-- App Store distribution
-
-The existing web/PWA version remains useful independently.
-
----
-
+ 
+## Interesting problems I solved
+ 
+- **Recurring items:** daily, weekdays, weekly on chosen days, monthly, yearly, or custom, with "delete this one / this and future / whole series"
+- **Time-zone-aware auto-completion:** scheduled tasks complete themselves after their end time in the user's chosen time zone, including overnight and multi-day tasks
+- **Timelines past midnight:** a day's schedule can extend into early next morning without breaking the next day's view
+- **Phone sign-in:** switched home-screen sign-in to a one-time code because magic links opened a separate Safari tab
+- **Linked completion:** checking every subtask completes the parent; reopening one reopens it, and the state stays in sync across all views
+## How I built it
+ 
+I owned the product design, feature decisions, data model, and testing, and built the code using AI-assisted development. Every feature in this README came from a real problem I hit while using the app.
+ 
+## What's next
+ 
+- Refine Google Calendar sync and cross-device testing
+- Native iPhone/iPad app for Apple Calendar access, widgets, and reliable notifications ([plan](docs/NATIVE-APP-PLAN.md))
 ## Run locally
-
+ 
 ```bash
 npm install
-npm run dev
+npm run dev   # http://localhost:3000
 ```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
+ 
+Requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Full setup: [docs/SETUP.md](docs/SETUP.md) · Version history: [docs/CHANGELOG.md](docs/CHANGELOG.md)
+ 
 ---
-
-## Tests
-
-Automated tests cover the core planner logic: sync merging, reminders, recurring tasks and dates, the weekly review, search, project board ordering and theme color migration.
-
-```bash
-npm test          # run once
-npm run test:watch  # re-run on save
-```
-
-Tests live in `tests/` and run with Vitest. `npm run build` runs them first, so a failing test stops a Vercel deploy before it reaches users.
-
-## Supabase environment variables
-
-Aurea expects:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-```
-
-These should be configured in the hosting environment when cloud sync is enabled.
-
-Do **not** expose Supabase service-role or secret keys in the browser build.
-
----
-
-## Deploy
-
-The production workflow is:
-
-```text
-GitHub
-   ↓
-Vercel
-   ↓
-Existing Aurea production domain
-```
-
-The GitHub repository is connected to the existing Vercel project.
-
-To update Aurea:
-
-1. upload or commit changed files to the existing repository
-2. commit to `main`
-3. Vercel automatically creates a new deployment
-4. once the deployment is Ready, the existing Aurea domain serves the latest production version
-
-There is no need to create a new Vercel project or change the production domain for each update.
-
----
-
-## Current priorities
-
-The current focus is to stabilize the planner experience before adding more external integrations.
-
-Near-term work includes:
-
-- refine Google Calendar sync
-- continue testing cross-device sync
-- improve routines and scheduling behavior
-- polish mobile/PWA behavior
-- continue UI/UX feedback passes
-- prepare architecture for a future native iPhone/iPad build
-
-Advanced Maps/location features and native Apple Calendar access are intentionally postponed for now.
-
----
-
-## Product direction
-
-Aurea is designed to stay:
-
-- aesthetic
-- minimal
-- easy to navigate
-- personal-first
-- useful on both laptop and phone
-
-The goal is to combine the user's separate planning workflows — daily to-dos, project management, routines, and calendar scheduling — into one calm, unified system.
+ 
+Made by [Angelyne Susanto](https://github.com/angelynes) · [LinkedIn](https://www.linkedin.com/in/angelyne-susanto/) 
